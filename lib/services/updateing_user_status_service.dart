@@ -1,56 +1,59 @@
 import 'dart:convert';
+import 'package:chefadmin/apis/api_endpoints.dart';
+import 'package:chefadmin/apis/apis_localhost.dart';
 import 'package:http/http.dart' as http;
 import '../models/user_models.dart';
 
 class AdminService {
-  // IMPORTANT: Make sure this is the correct IP of your server!
-  static const String _baseUrl = "http://10.13.66.12:5000/api/admin/users";
-
+  // Fetch all users
   static Future<List<AppUser>> fetchUsers() async {
     try {
-      final response = await http.get(Uri.parse(_baseUrl));
+      final response = await http.get(Uri.parse(ApiEndpoints.adminUsers));
       if (response.statusCode == 200) {
         List<dynamic> body = json.decode(response.body);
         return body.map((dynamic item) => AppUser.fromJson(item)).toList();
       } else {
-        throw Exception(
-            'Failed to load users. Status code: ${response.statusCode}');
+        throw Exception('Failed to load users');
       }
     } catch (e) {
-      throw Exception(
-          'Failed to connect to the server. Please check your network and IP address.');
+      throw Exception('Connection error');
     }
   }
 
   static Future<void> updateUserStatus(String userId, bool isApproved) async {
-    try {
-      final response = await http.patch(
-        Uri.parse('$_baseUrl/$userId/status'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'isApproved': isApproved}),
-      );
-      if (response.statusCode != 200) {
-        throw Exception(
-            'Failed to update user status. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to connect to the server to update status.');
-    }
+    final response = await http.patch(
+      Uri.parse('${ApiEndpoints.adminUsers}/$userId/status'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'isApproved': isApproved}),
+    );
+    if (response.statusCode != 200) throw Exception('Update failed');
   }
 
-  // --- NEW METHOD ---
   static Future<void> deactivateAllUsers() async {
-    try {
-      final response = await http.patch(
-        Uri.parse('$_baseUrl/deactivate-all'),
-        headers: {'Content-Type': 'application/json'},
-      );
-      if (response.statusCode != 200) {
-        throw Exception(
-            'Failed to deactivate all users. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to connect to the server to deactivate all users.');
+    await http.patch(Uri.parse('${ApiEndpoints.adminUsers}/deactivate-all'));
+  }
+
+  static Future<List<dynamic>> fetchGlobalPayments(
+    String month,
+    String gender,
+  ) async {
+    final String url =
+        "${ApiEndpoints.adminAllPayments}?month=$month&gender=$gender";
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Payment fetch failed');
+  }
+
+  static Future<List<dynamic>> getSkipReport(
+    String date,
+    String mealType,
+  ) async {
+    final String url =
+        "${ApiEndpoints.adminSkipReport}?date=$date&mealType=$mealType";
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['report'] ?? [];
     }
+    throw Exception('Skip report failed');
   }
 }

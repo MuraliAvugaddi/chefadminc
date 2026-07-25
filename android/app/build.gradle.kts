@@ -11,12 +11,15 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        // Upgrade Java compile target to Java 21
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        // Set Kotlin jvmTarget to Java 21
+        // Note: Kotlin plugin 2.1.0+ supports jvm target 21
+        jvmTarget = JavaVersion.VERSION_21.toString()
     }
 
     defaultConfig {

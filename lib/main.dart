@@ -1,5 +1,4 @@
-// Import your screen
-import 'package:chefadmin/screens/homeScreen.dart';
+import 'package:chefadmin/screens/login_screen.dart';
 import 'package:chefadmin/services/Api_token_history.dart';
 // Import Flutter and GetX
 import 'package:flutter/material.dart';
@@ -40,7 +39,7 @@ class AdminApp extends StatelessWidget {
         ),
       ),
       // The app now starts directly at the HomeScreen.
-      home: const Homescreen(),
+      home: LoginScreen(),
     );
   }
 }

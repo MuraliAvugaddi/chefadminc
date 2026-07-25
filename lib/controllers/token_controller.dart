@@ -5,6 +5,7 @@ class TokenStatsController extends GetxController {
   final TokenStatsService _apiService = TokenStatsService();
 
   var isLoading = true.obs;
+
   var errorMessage = ''.obs;
   final RxMap<String, int> todayStats = <String, int>{}.obs;
   final RxMap<String, int> yesterdayStats = <String, int>{}.obs;

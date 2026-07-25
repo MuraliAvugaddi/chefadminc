@@ -1,3 +1,6 @@
+import 'package:chefadmin/screens/Skip%20_StatsScreen.dart';
+import 'package:chefadmin/screens/admin_manage_special_menu.dart';
+import 'package:chefadmin/screens/global_payment_history_screen.dart';
 import 'package:chefadmin/screens/token_history_screen.dart';
 import 'package:chefadmin/screens/token_status_scrren.dart';
 import 'package:chefadmin/screens/updateing_user_status_screen.dart';
@@ -10,70 +13,160 @@ class Homescreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine screen width for responsiveness
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    // Web: 3 columns | Tablet: 2 columns | Mobile: 1 column
+    int crossAxisCount = screenWidth > 1000 ? 3 : (screenWidth > 600 ? 2 : 1);
+    double spacing = screenWidth > 600 ? 25 : 15;
+
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: const Color(0xffF5F5F7),
       appBar: AppBar(
-        title: Text("Admin Panel", style: GoogleFonts.poppins()),
+        title: Text(
+          "Admin Control Center",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
         backgroundColor: const Color(0xffFFC800),
-        elevation: 1,
+        elevation: 0,
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildMenuButton(
-              context: context,
-              title: 'Token Dashboard',
-              icon: Icons.confirmation_number,
-              onTap: () {
-                Get.to(() => TokenStatusScreen());
-              },
-            ),
-            const SizedBox(height: 20),
-            _buildMenuButton(
-              context: context,
-              title: 'User Management',
-              icon: Icons.people_alt,
-              onTap: () {
-                Get.to(() => UpdateingUserStatusScreen());
-              },
-            ),
-            const SizedBox(height: 20),
-            _buildMenuButton(
-              context: context,
-              title: 'History of Tokens',
-              icon: Icons.people_alt,
-              onTap: () {
-                Get.to(() => TokenHistoryScreen());
-              },
-            ),
-          ],
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(
+            maxWidth: 1100,
+          ), // Centers content on large web monitors
+          padding: EdgeInsets.all(spacing),
+          child: GridView.count(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: spacing,
+            childAspectRatio: screenWidth > 600
+                ? 1.4
+                : 2.5, // Wider cards on web, taller on mobile
+            shrinkWrap: true,
+            children: [
+              _buildMenuCard(
+                title: 'Token Dashboard',
+                subtitle: 'Real-time meal tracking',
+                icon: Icons.dashboard_customize_rounded,
+                color: Colors.teal,
+                onTap: () => Get.to(() => TokenStatusScreen()),
+              ),
+              _buildMenuCard(
+                title: 'User Management',
+                subtitle: 'Approve & Renew access',
+                icon: Icons.manage_accounts_rounded,
+                color: Colors.indigo,
+                onTap: () => Get.to(() => UpdateingUserStatusScreen()),
+              ),
+              _buildMenuCard(
+                title: 'Token Logs',
+                subtitle: 'Full generation history',
+                icon: Icons.history_edu_rounded,
+                color: Colors.blueGrey,
+                onTap: () => Get.to(() => const TokenHistoryScreen()),
+              ),
+              _buildMenuCard(
+                title: 'Revenue Records',
+                subtitle: 'Online & Offline payments',
+                icon: Icons.account_balance_wallet_rounded,
+                color: Colors.green.shade700,
+                onTap: () => Get.to(() => const GlobalPaymentHistoryScreen()),
+              ),
+              _buildMenuCard(
+                title: 'Skip Meal Reports',
+                subtitle: 'Food waste reduction stats',
+                icon: Icons.no_meals_rounded,
+                color: Colors.redAccent,
+                onTap: () => Get.to(() => const AdminMealReportScreen()),
+              ),
+              _buildMenuCard(
+                title: 'spacical Food',
+                subtitle: 'User can oder',
+                icon: Icons.set_meal_sharp,
+                color: const Color.fromARGB(255, 71, 252, 0),
+                onTap: () => Get.to(() => AdminSpecialFoodManager()),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMenuButton({
-    required BuildContext context,
+  Widget _buildMenuCard({
     required String title,
+    required String subtitle,
     required IconData icon,
+    required Color color,
     required VoidCallback onTap,
   }) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 28),
-      label: Text(title),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.teal,
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: GoogleFonts.poppins(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        elevation: 4,
+        child: Row(
+          children: [
+            // Icon Container
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(icon, color: color, size: 32),
+            ),
+            const SizedBox(width: 16),
+            // Text Content
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: Colors.grey,
+            ),
+          ],
+        ),
       ),
     );
   }
