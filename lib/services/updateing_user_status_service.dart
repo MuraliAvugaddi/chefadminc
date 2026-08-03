@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:chefadmin/apis/api_endpoints.dart';
 import 'package:chefadmin/apis/apis_localhost.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../models/user_models.dart';
 
 class AdminService {
@@ -33,12 +34,17 @@ class AdminService {
     await http.patch(Uri.parse('${ApiEndpoints.adminUsers}/deactivate-all'));
   }
 
+  // ✅ fetchGlobalPayments with optional DateTime date parameter
   static Future<List<dynamic>> fetchGlobalPayments(
     String month,
-    String gender,
-  ) async {
-    final String url =
-        "${ApiEndpoints.adminAllPayments}?month=$month&gender=$gender";
+    String gender, {
+    DateTime? date,
+  }) async {
+    String url = "${ApiEndpoints.adminAllPayments}?month=$month&gender=$gender";
+    if (date != null) {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+      url += "&date=$formattedDate";
+    }
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception('Payment fetch failed');

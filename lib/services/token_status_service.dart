@@ -4,7 +4,6 @@ import 'package:chefadmin/apis/apis_localhost.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-
 class TokenStatsService {
   Future<Map<String, int>> getStatsForDate(DateTime date) async {
     final String formattedDate = DateFormat('yyyy-MM-dd').format(date);

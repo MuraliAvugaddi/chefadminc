@@ -8,6 +8,7 @@ class PaymentHistoryController extends GetxController {
 
   var selectedMonth = DateFormat('MMMM yyyy').format(DateTime.now()).obs;
   var selectedGender = 'All'.obs;
+  var selectedDate = Rxn<DateTime>(); // 👈 Calendar date support
 
   @override
   void onInit() {
@@ -18,10 +19,10 @@ class PaymentHistoryController extends GetxController {
   Future<void> fetchPayments() async {
     try {
       isLoading(true);
-      // ✅ Pass both reactive values to the static service method
       final data = await AdminService.fetchGlobalPayments(
         selectedMonth.value,
         selectedGender.value,
+        date: selectedDate.value,
       );
       payments.assignAll(data);
     } catch (e) {
@@ -31,9 +32,14 @@ class PaymentHistoryController extends GetxController {
     }
   }
 
-  void updateFilters({String? month, String? gender}) {
+  void updateFilters({String? month, String? gender, DateTime? date, bool clearDate = false}) {
     if (month != null) selectedMonth.value = month;
     if (gender != null) selectedGender.value = gender;
-    fetchPayments(); // Automatically refresh data after updating filters
+    if (clearDate) {
+      selectedDate.value = null;
+    } else if (date != null) {
+      selectedDate.value = date;
+    }
+    fetchPayments(); 
   }
 }

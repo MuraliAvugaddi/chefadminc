@@ -1,6 +1,7 @@
+import 'package:chefadmin/screens/DayScholarOrdersScreen.dart';
 import 'package:chefadmin/screens/Skip%20_StatsScreen.dart';
 import 'package:chefadmin/screens/admin_manage_special_menu.dart';
-import 'package:chefadmin/screens/global_payment_history_screen.dart';
+import 'package:chefadmin/screens/payment_history_screen.dart';
 import 'package:chefadmin/screens/token_history_screen.dart';
 import 'package:chefadmin/screens/token_status_scrren.dart';
 import 'package:chefadmin/screens/updateing_user_status_screen.dart';
@@ -85,11 +86,11 @@ class Homescreen extends StatelessWidget {
                 onTap: () => Get.to(() => const AdminMealReportScreen()),
               ),
               _buildMenuCard(
-                title: 'spacical Food',
-                subtitle: 'User can oder',
+                title: 'Day Scholar Orders',
+                subtitle: 'Manage day scholar orders',
                 icon: Icons.set_meal_sharp,
                 color: const Color.fromARGB(255, 71, 252, 0),
-                onTap: () => Get.to(() => AdminSpecialFoodManager()),
+                onTap: () => Get.to(() => DayScholarOrdersScreen()),
               ),
             ],
           ),
