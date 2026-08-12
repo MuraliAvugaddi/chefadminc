@@ -1,7 +1,6 @@
 class ApiEndpoints {
-   static const String baseUrl =
+  static const String baseUrl =
       "https://chefhospitality-backend-main.onrender.com/api";
-  
 
   // Admin Routes
   static const String adminBase = "$baseUrl/admin";
@@ -9,8 +8,11 @@ class ApiEndpoints {
   static const String adminHistory = "$adminBase/history";
   static const String adminAllPayments = "$adminBase/all-payments";
   static const String adminSkipReport = "$adminBase/skip-report";
-
   static const String adminDayScholarOrders = "$adminBase/dayscholar-orders";
+
+  // Menu Routes
+  static const String menuActive = "$baseUrl/menu/active";
+  static const String adminUploadMenu = "$adminBase/menu/upload";
 
   // Admin Item Management
   static const String adminAddItem = "$adminBase/add-item";
@@ -25,6 +27,3 @@ class ApiEndpoints {
 
   static const String adminAuthToken = "YOUR_ADMIN_JWT_TOKEN";
 }
-
-
-

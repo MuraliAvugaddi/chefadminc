@@ -1,3 +1,4 @@
+import 'package:chefadmin/screens/AdminMenuUploadScreen.dart';
 import 'package:chefadmin/screens/DayScholarOrdersScreen.dart';
 import 'package:chefadmin/screens/Skip%20_StatsScreen.dart';
 import 'package:chefadmin/screens/admin_manage_special_menu.dart';
@@ -79,11 +80,11 @@ class Homescreen extends StatelessWidget {
                 onTap: () => Get.to(() => const GlobalPaymentHistoryScreen()),
               ),
               _buildMenuCard(
-                title: 'Skip Meal Reports',
+                title: 'Menu Upload',
                 subtitle: 'Food waste reduction stats',
                 icon: Icons.no_meals_rounded,
                 color: Colors.redAccent,
-                onTap: () => Get.to(() => const AdminMealReportScreen()),
+                onTap: () => Get.to(() => const AdminMenuUploadScreen()),
               ),
               _buildMenuCard(
                 title: 'Day Scholar Orders',
