@@ -22,16 +22,37 @@ class AdminService {
   }
 
   static Future<void> updateUserStatus(String userId, bool isApproved) async {
+    final url = '${ApiEndpoints.adminUsers}/$userId/status';
+
+    // 🔍 Debug prints to track what is being sent and received
+    print("----------------------------------------");
+    print("PATCH URL: $url");
+    print("Payload: ${json.encode({'isApproved': isApproved})}");
+
     final response = await http.patch(
-      Uri.parse('${ApiEndpoints.adminUsers}/$userId/status'),
+      Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'isApproved': isApproved}),
     );
-    if (response.statusCode != 200) throw Exception('Update failed');
+
+    print("Response Status Code: ${response.statusCode}");
+    print("Response Body: ${response.body}");
+    print("----------------------------------------");
+
+    if (response.statusCode != 200) {
+      throw Exception('Update failed with status: ${response.statusCode}');
+    }
   }
 
   static Future<void> deactivateAllUsers() async {
-    await http.patch(Uri.parse('${ApiEndpoints.adminUsers}/deactivate-all'));
+    final response = await http.patch(
+      Uri.parse('${ApiEndpoints.adminUsers}/deactivate-all'),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Deactivate all failed with status: ${response.statusCode}',
+      );
+    }
   }
 
   // ✅ fetchGlobalPayments with optional DateTime date parameter

@@ -29,7 +29,7 @@ class TokenHistoryScreen extends StatelessWidget {
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xffFFC800),
         elevation: 0,
         centerTitle: true,
         actions: [

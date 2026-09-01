@@ -13,9 +13,9 @@ class UpdateingUserStatusScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xffF4F7FE), // Softer background color
+        backgroundColor: const Color(0xffF4F7FE),
         appBar: AppBar(
-          toolbarHeight: 80,
+          toolbarHeight: 65,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -24,14 +24,14 @@ class UpdateingUserStatusScreen extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
-                  fontSize: 22,
+                  fontSize: 18,
                 ),
               ),
               Text(
-                "Manage mess access and monthly renewals",
+                "Manage mess access & renewals",
                 style: GoogleFonts.poppins(
                   color: Colors.grey.shade600,
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -47,26 +47,26 @@ class UpdateingUserStatusScreen extends StatelessWidget {
               onTap: () => controller.showDeactivateAllDialog(context),
               tooltip: "Reset Month",
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 4),
             _buildHeaderAction(
               icon: Icons.refresh,
               color: const Color(0xffFFC800),
               onTap: () => controller.fetchUsers(),
               tooltip: "Sync Data",
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 12),
           ],
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(60),
+            preferredSize: const Size.fromHeight(45),
             child: Container(
               alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.only(left: 20),
+              padding: const EdgeInsets.only(left: 16),
               child: TabBar(
                 isScrollable: true,
                 labelColor: Colors.black,
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: const Color(0xffFFC800),
-                indicatorWeight: 4,
+                indicatorWeight: 3,
                 indicatorSize: TabBarIndicatorSize.label,
                 tabs: [
                   Tab(child: _tabLabel("Active Students", Icons.verified_user)),
@@ -78,23 +78,59 @@ class UpdateingUserStatusScreen extends StatelessWidget {
         ),
         body: Center(
           child: Container(
-            constraints: const BoxConstraints(
-              maxWidth: 1200,
-            ), // Perfect for Web
+            constraints: const BoxConstraints(maxWidth: 1200),
             child: Column(
               children: [
-                // --- 🔍 CUSTOM DASHBOARD SEARCH BAR ---
+                // --- 📊 RESPONSIVE STATS ROW (Fixed Overflow) ---
                 Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Obx(() {
+                    int total = controller.totalUsersCount;
+                    int active = controller.totalActiveCount;
+                    int expired = controller.totalInactiveCount;
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: _buildHeaderStatChip(
+                            "Total",
+                            total.toString(),
+                            Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildHeaderStatChip(
+                            "Active",
+                            active.toString(),
+                            Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildHeaderStatChip(
+                            "No Access",
+                            expired.toString(),
+                            Colors.red,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+
+                // --- 🔍 SLIM SEARCH BAR ---
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
                   child: Container(
+                    height: 46,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -102,14 +138,18 @@ class UpdateingUserStatusScreen extends StatelessWidget {
                       onChanged: controller.updateSearchQuery,
                       decoration: InputDecoration(
                         hintText: "Search by phone, name, or enrollment...",
-                        hintStyle: GoogleFonts.poppins(fontSize: 14),
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey.shade400,
+                        ),
                         prefixIcon: const Icon(
                           Icons.search,
                           color: Color(0xffFFC800),
+                          size: 18,
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 20,
+                          vertical: 11,
                         ),
                       ),
                     ),
@@ -133,12 +173,56 @@ class UpdateingUserStatusScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildHeaderStatChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _tabLabel(String label, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 18),
-        const SizedBox(width: 8),
-        Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        Icon(icon, size: 15),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
@@ -153,14 +237,14 @@ class UpdateingUserStatusScreen extends StatelessWidget {
       message: tooltip,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: color, size: 22),
+          child: Icon(icon, color: color, size: 18),
         ),
       ),
     );
@@ -186,25 +270,25 @@ class UpdateingUserStatusScreen extends StatelessWidget {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.folder_open, size: 60, color: Colors.grey.shade300),
-            const SizedBox(height: 10),
+            Icon(Icons.folder_open, size: 50, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
             Text(
               "No results found in this category",
-              style: GoogleFonts.poppins(color: Colors.grey),
+              style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13),
             ),
           ],
         );
       }
 
       return GridView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: MediaQuery.of(context).size.width > 1100
               ? 3
               : (MediaQuery.of(context).size.width > 700 ? 2 : 1),
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
-          mainAxisExtent: 280,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          mainAxisExtent: 215,
         ),
         itemCount: users.length,
         itemBuilder: (context, index) =>
@@ -214,7 +298,7 @@ class UpdateingUserStatusScreen extends StatelessWidget {
   }
 }
 
-// --- 💳 MODERN DASHBOARD CARD ---
+// --- 💳 COMPACT MODERN DASHBOARD CARD ---
 class UserStatusCard extends StatefulWidget {
   final AppUser user;
   final AdminController controller;
@@ -229,7 +313,7 @@ class UserStatusCard extends StatefulWidget {
 }
 
 class _UserStatusCardState extends State<UserStatusCard> {
-  bool isHovered = false; // For Web Hover Effect
+  bool isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -239,77 +323,69 @@ class _UserStatusCardState extends State<UserStatusCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         transform: isHovered
-            ? (Matrix4.identity()..translate(0, -5, 0))
+            ? (Matrix4.identity()..translate(0, -3, 0))
             : Matrix4.identity(),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: isHovered
-                  ? Colors.black.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+                  ? Colors.black.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  height: 50,
-                  width: 50,
+                  height: 40,
+                  width: 40,
                   decoration: BoxDecoration(
                     color: const Color(0xffFFC800).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
                     child: Text(
-                      widget.user.name[0].toUpperCase(),
+                      widget.user.name.isNotEmpty
+                          ? widget.user.name[0].toUpperCase()
+                          : "?",
                       style: const TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 16,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 15),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         widget.user.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                       Obx(() {
                         bool isActive = widget.user.isApproved.value;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.red.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            isActive ? "ACTIVE" : "EXPIRED",
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: isActive ? Colors.green : Colors.red,
-                            ),
+                        return Text(
+                          isActive ? "ACTIVE" : "EXPIRED",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isActive ? Colors.green : Colors.red,
                           ),
                         );
                       }),
@@ -318,25 +394,14 @@ class _UserStatusCardState extends State<UserStatusCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            _infoRow(
-              Icons.badge_outlined,
-              "Enrollment",
-              widget.user.enrollmentNo,
-            ),
-            _infoRow(
-              Icons.phone_android_outlined,
-              "Contact",
-              widget.user.phonenumber,
-            ),
-            _infoRow(
-              Icons.room_outlined,
-              "Location",
-              "Room ${widget.user.room}",
-            ),
+            const SizedBox(height: 12),
+            _infoRow(Icons.badge_outlined, widget.user.enrollmentNo),
+            _infoRow(Icons.phone_android_outlined, widget.user.phonenumber),
+            _infoRow(Icons.room_outlined, "Room ${widget.user.room}"),
             const Spacer(),
             SizedBox(
               width: double.infinity,
+              height: 36,
               child: Obx(() {
                 bool isActive = widget.user.isApproved.value;
                 return ElevatedButton(
@@ -348,17 +413,17 @@ class _UserStatusCardState extends State<UserStatusCard> {
                         : Colors.green.shade400,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    padding: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: Text(
                     isActive ? "REVOKE ACCESS" : "RENEW ACCESS",
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      letterSpacing: 1,
+                      fontSize: 11,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 );
@@ -370,28 +435,22 @@ class _UserStatusCardState extends State<UserStatusCard> {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value) {
+  Widget _infoRow(IconData icon, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.only(bottom: 4.0),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: Colors.grey),
-          const SizedBox(width: 8),
-          Text(
-            "$label: ",
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Icon(icon, size: 13, color: Colors.grey.shade500),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
+                fontSize: 11.5,
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),

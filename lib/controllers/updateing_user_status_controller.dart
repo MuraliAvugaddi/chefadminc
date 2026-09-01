@@ -2,8 +2,7 @@ import 'package:chefadmin/models/user_models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:socket_io_client/socket_io_client.dart'
-    as IO; // ✅ Added socket client import
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../services/updateing_user_status_service.dart';
 
 class AdminController extends GetxController {
@@ -11,26 +10,24 @@ class AdminController extends GetxController {
   final _allUsers = <AppUser>[].obs;
   var searchQuery = ''.obs;
 
-  IO.Socket? socket; // ✅ Socket instance variable
+  IO.Socket? socket;
 
   @override
   void onInit() {
     super.onInit();
     fetchUsers();
-    _initSocketListener(); // ✅ Listen for real-time changes
+    _initSocketListener();
   }
 
   @override
   void onClose() {
-    socket?.dispose(); // ✅ Clean up socket connection on close
+    socket?.dispose();
     super.onClose();
   }
 
   // --- 🔌 SOCKET LISTENER ---
-
   void _initSocketListener() {
     try {
-      // Connect to your backend socket server (update URL to match your backend environment)
       socket = IO.io('http://localhost:5000', <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': true,
@@ -40,9 +37,7 @@ class AdminController extends GetxController {
         print("Connected to socket server");
       });
 
-      // Listen for backend broadcast events triggering status updates or bulk resets
       socket?.on('statusUpdated', (data) {
-        // Automatically refresh the user list when any state change occurs on the server
         fetchUsers();
       });
 
@@ -53,8 +48,6 @@ class AdminController extends GetxController {
   }
 
   // --- 🔍 FILTERING LOGIC ---
-
-  // Private helper to apply search to the entire user base
   List<AppUser> get _searchBase {
     if (searchQuery.value.isEmpty) return _allUsers;
     String query = searchQuery.value.toLowerCase().trim();
@@ -67,21 +60,23 @@ class AdminController extends GetxController {
         .toList();
   }
 
-  // Returns all users that match the search
   List<AppUser> get filteredUsers => _searchBase;
 
-  // Returns only APPROVED users that match the search
   List<AppUser> get activeUsers =>
       _searchBase.where((u) => u.isApproved.value).toList();
 
-  // Returns only EXPIRED/REVOKED users that match the search
   List<AppUser> get expiredUsers =>
       _searchBase.where((u) => !u.isApproved.value).toList();
 
   void updateSearchQuery(String query) => searchQuery.value = query;
 
-  // --- 🌐 API ACTIONS ---
+  // --- 📊 MESS MANAGER STATS COUNTERS ---
+  int get totalUsersCount => _allUsers.length;
+  int get totalActiveCount => _allUsers.where((u) => u.isApproved.value).length;
+  int get totalInactiveCount =>
+      _allUsers.where((u) => !u.isApproved.value).length;
 
+  // --- 🌐 API ACTIONS ---
   void fetchUsers() async {
     try {
       isLoading.value = true;
@@ -99,7 +94,10 @@ class AdminController extends GetxController {
     user.isApproved.value = !originalStatus; // UI updates immediately
 
     try {
-      await AdminService.updateUserStatus(user.id, user.isApproved.value);
+      // Safely grab the ID depending on how your AppUser model stores it
+      String userId = user.id;
+
+      await AdminService.updateUserStatus(userId, user.isApproved.value);
       Get.snackbar(
         'Status Updated',
         "${user.name} is now ${user.isApproved.value ? 'Active' : 'Inactive'}",
@@ -114,8 +112,6 @@ class AdminController extends GetxController {
   }
 
   // --- ⚠️ BULK ACTIONS ---
-
-  // Shows the confirmation dialog
   void showDeactivateAllDialog(BuildContext context) {
     showCupertinoDialog(
       context: context,
@@ -131,7 +127,7 @@ class AdminController extends GetxController {
               onPressed: () => Navigator.of(ctx).pop(),
             ),
             CupertinoDialogAction(
-              isDestructiveAction: true, // Makes the text red automatically
+              isDestructiveAction: true,
               onPressed: () {
                 Navigator.of(ctx).pop();
                 _deactivateAllUsers();
@@ -144,13 +140,10 @@ class AdminController extends GetxController {
     );
   }
 
-  // Private method that performs the bulk reset
   Future<void> _deactivateAllUsers() async {
     try {
       isLoading.value = true;
       await AdminService.deactivateAllUsers();
-
-      // Refresh local list to show all users as deactivated
       fetchUsers();
 
       Get.snackbar(
