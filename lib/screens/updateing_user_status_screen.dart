@@ -81,7 +81,7 @@ class UpdateingUserStatusScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 1200),
             child: Column(
               children: [
-                // --- 📊 RESPONSIVE STATS ROW (Fixed Overflow) ---
+                // --- 📊 RESPONSIVE STATS ROW ---
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Obx(() {
@@ -408,9 +408,10 @@ class _UserStatusCardState extends State<UserStatusCard> {
                   onPressed: () =>
                       widget.controller.toggleApproval(widget.user),
                   style: ElevatedButton.styleFrom(
+                    // 🎨 Updated button colors: Active tab is Green, Expired/Pending tab is Red
                     backgroundColor: isActive
-                        ? Colors.red.shade400
-                        : Colors.green.shade400,
+                        ? Colors.green.shade600
+                        : Colors.red.shade400,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: EdgeInsets.zero,

@@ -20,44 +20,22 @@ class TokenHistoryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xffF4F7FE), // Softer background
       appBar: AppBar(
-        toolbarHeight: 70,
+        toolbarHeight: 65,
         title: Text(
           "Generation Logs",
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: Colors.black,
-            fontSize: 20,
+            fontSize: 18,
           ),
         ),
-        backgroundColor: const Color(0xffFFC800),
+        backgroundColor: Color(0xffFFC800),
         elevation: 0,
-        centerTitle: true,
-        actions: [
-          _buildHeaderAction(
-            icon: Icons.calendar_month_outlined,
-            color: const Color(0xffFFC800),
-            onTap: () async {
-              DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: controller.selectedDate.value,
-                firstDate: DateTime(2025),
-                lastDate: DateTime.now(),
-                builder: (context, child) => Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                      primary: Color(0xffFFC800),
-                      onPrimary: Colors.black,
-                    ),
-                  ),
-                  child: child!,
-                ),
-              );
-              if (picked != null) controller.updateDate(picked);
-            },
-            tooltip: "Filter by Date",
-          ),
-          const SizedBox(width: 20),
-        ],
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: Center(
         child: Container(
@@ -66,79 +44,134 @@ class TokenHistoryScreen extends StatelessWidget {
           ), // Dashboard width limit
           child: Column(
             children: [
-              // --- 📅 DATE SELECTOR & FILTER BAR ---
+              // --- 📅 PROMINENT VISIBLE DATE & MEAL FILTER BAR ---
               Container(
                 padding: const EdgeInsets.symmetric(
-                  vertical: 16,
+                  vertical: 14,
                   horizontal: 20,
                 ),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: const Border(
                     bottom: BorderSide(color: Color(0xffE0E0E0), width: 1),
                   ),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: mealTypes.map((meal) {
-                            return Obx(() {
-                              bool isSel =
-                                  controller.selectedMealType.value == meal;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: ChoiceChip(
-                                  label: Text(meal),
-                                  selected: isSel,
-                                  onSelected: (_) =>
-                                      controller.changeMealType(meal),
-                                  selectedColor: const Color(0xffFFC800),
-                                  backgroundColor: const Color(0xffF8F9FA),
-                                  labelStyle: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: isSel
-                                        ? FontWeight.bold
-                                        : FontWeight.w500,
-                                    color: isSel
-                                        ? Colors.black
-                                        : Colors.grey[600],
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  side: BorderSide.none,
-                                  showCheckmark: false,
-                                ),
-                              );
-                            });
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                    Obx(
-                      () => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xffFFC800).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          DateFormat(
-                            'dd MMM yyyy',
-                          ).format(controller.selectedDate.value),
+                    // Row 1: Visible Date Picker Button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Filter Logs",
                           style: GoogleFonts.poppins(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Colors.grey.shade700,
                           ),
                         ),
-                      ),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(
+                              0xffFFC800,
+                            ).withValues(alpha: 0.15),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.calendar_month_outlined,
+                            size: 16,
+                            color: Colors.black87,
+                          ),
+                          label: Obx(
+                            () => Text(
+                              DateFormat(
+                                'dd MMM yyyy',
+                              ).format(controller.selectedDate.value),
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          onPressed: () async {
+                            DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: controller.selectedDate.value,
+                              firstDate: DateTime(2025),
+                              lastDate: DateTime.now(),
+                              builder: (context, child) => Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: Color(0xffFFC800),
+                                    onPrimary: Colors.black,
+                                  ),
+                                ),
+                                child: child!,
+                              ),
+                            );
+                            if (picked != null) controller.updateDate(picked);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Row 2: Meal Type Chips
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: mealTypes.map((meal) {
+                                return Obx(() {
+                                  bool isSel =
+                                      controller.selectedMealType.value == meal;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ChoiceChip(
+                                      label: Text(meal),
+                                      selected: isSel,
+                                      onSelected: (_) =>
+                                          controller.changeMealType(meal),
+                                      selectedColor: const Color(0xffFFC800),
+                                      backgroundColor: const Color(0xffF8F9FA),
+                                      labelStyle: GoogleFonts.poppins(
+                                        fontSize: 12.5,
+                                        fontWeight: isSel
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                        color: isSel
+                                            ? Colors.black
+                                            : Colors.grey[600],
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      side: BorderSide.none,
+                                      showCheckmark: false,
+                                    ),
+                                  );
+                                });
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -175,7 +208,7 @@ class TokenHistoryScreen extends StatelessWidget {
 
                   return GridView.builder(
                     controller: controller.scrollController,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: screenWidth > 1200
                           ? 3
@@ -208,29 +241,6 @@ class TokenHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderAction({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    required String tooltip,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-      ),
-    );
-  }
-
   Widget _buildHistoryCard(TokenHistoryItem item) {
     return _HoverableCard(
       child: Row(
@@ -239,7 +249,7 @@ class TokenHistoryScreen extends StatelessWidget {
           Container(
             width: 60,
             decoration: BoxDecoration(
-              color: const Color(0xffFFC800).withValues(alpha: 0.1),
+              color: const Color(0xffFFC800).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -274,13 +284,16 @@ class TokenHistoryScreen extends StatelessWidget {
                   item.name,
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: 14,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   "Room ${item.room} • ${item.enrollmentNo}",
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ],
             ),
@@ -299,7 +312,10 @@ class TokenHistoryScreen extends StatelessWidget {
               ),
               Text(
                 DateFormat('dd MMM').format(item.generatedAt.toLocal()),
-                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  color: Colors.grey[400],
+                ),
               ),
             ],
           ),
@@ -334,9 +350,9 @@ class __HoverableCardState extends State<_HoverableCard> {
           boxShadow: [
             BoxShadow(
               color: isHovered
-                  ? Colors.black.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.3),
-              blurRadius: isHovered ? 20 : 10,
+                  ? Colors.black.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.03),
+              blurRadius: isHovered ? 15 : 8,
               offset: const Offset(0, 4),
             ),
           ],
