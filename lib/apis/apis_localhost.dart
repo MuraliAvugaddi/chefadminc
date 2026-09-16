@@ -12,7 +12,7 @@ class ApiEndpoints {
 
   // Menu Routes
   static const String menuActive = "$baseUrl/menu/active";
-  static const String adminUploadMenu = "$adminBase/menu/upload";
+  static const String adminUploadMenu = "$adminBase/admin/menu/upload";
 
   // Admin Item Management
   static const String adminAddItem = "$adminBase/add-item";
@@ -21,6 +21,10 @@ class ApiEndpoints {
   // Special Food Routes
   static const String specialFoodBase = "$baseUrl/special-food";
   static const String specialFoodMenu = "$specialFoodBase/menu";
+
+  // --- FEEDBACK ENDPOINT ---
+  static const String adminFeedbackList =
+      "$baseUrl/admin/feedback"; // 👈 Added here
 
   // Token Routes
   static const String tokenStats = "$baseUrl/tokens/stats";

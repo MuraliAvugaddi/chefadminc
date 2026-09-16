@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:chefadmin/apis/api_endpoints.dart';
 import 'package:chefadmin/apis/apis_localhost.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:get_storage/get_storage.dart';
 import '../models/user_models.dart';
 
 class AdminService {
@@ -24,20 +24,11 @@ class AdminService {
   static Future<void> updateUserStatus(String userId, bool isApproved) async {
     final url = '${ApiEndpoints.adminUsers}/$userId/status';
 
-    // 🔍 Debug prints to track what is being sent and received
-    print("----------------------------------------");
-    print("PATCH URL: $url");
-    print("Payload: ${json.encode({'isApproved': isApproved})}");
-
     final response = await http.patch(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'isApproved': isApproved}),
     );
-
-    print("Response Status Code: ${response.statusCode}");
-    print("Response Body: ${response.body}");
-    print("----------------------------------------");
 
     if (response.statusCode != 200) {
       throw Exception('Update failed with status: ${response.statusCode}');
@@ -55,7 +46,7 @@ class AdminService {
     }
   }
 
-  // ✅ fetchGlobalPayments with optional DateTime date parameter
+  // ✅ Fetch Global Payments with optional DateTime date parameter
   static Future<List<dynamic>> fetchGlobalPayments(
     String month,
     String gender, {
@@ -82,5 +73,37 @@ class AdminService {
       return json.decode(response.body)['report'] ?? [];
     }
     throw Exception('Skip report failed');
+  }
+
+  // ============================================================
+  // ✅ FETCH STUDENT FEEDBACK METHOD (Admin Side)
+  // ============================================================
+  static Future<List<dynamic>> fetchStudentFeedback({DateTime? date}) async {
+    try {
+      final box = GetStorage();
+      final token = box.read('token');
+
+      String url = ApiEndpoints.adminFeedbackList;
+      if (date != null) {
+        String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+        url += "?date=$formattedDate";
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load feedback records');
+      }
+    } catch (e) {
+      throw Exception('Connection error while fetching feedback: $e');
+    }
   }
 }

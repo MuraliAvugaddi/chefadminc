@@ -1,7 +1,7 @@
 import 'package:chefadmin/screens/AdminMenuUploadScreen.dart';
 import 'package:chefadmin/screens/DayScholarOrdersScreen.dart';
 import 'package:chefadmin/screens/Skip%20_StatsScreen.dart';
-import 'package:chefadmin/screens/admin_manage_special_menu.dart';
+import 'package:chefadmin/screens/studetns_feesbackscreen.dart';
 import 'package:chefadmin/screens/payment_history_screen.dart';
 import 'package:chefadmin/screens/token_history_screen.dart';
 import 'package:chefadmin/screens/token_status_scrren.dart';
@@ -92,6 +92,22 @@ class Homescreen extends StatelessWidget {
                 icon: Icons.set_meal_sharp,
                 color: const Color.fromARGB(255, 71, 252, 0),
                 onTap: () => Get.to(() => DayScholarOrdersScreen()),
+              ),
+              // --- ✨ NEW CARD: Student Feedback ---
+              _buildMenuCard(
+                title: 'Student Feedback',
+                subtitle: 'View ratings and student reviews',
+                icon: Icons.feedback_rounded,
+                color: Colors.amber.shade800,
+                onTap: () => Get.to(() => const StudentsFeedbackScreen()),
+              ),
+              // --- ✨ NEW CARD: Meal Skipped Report ---
+              _buildMenuCard(
+                title: 'Meal Skipped Report',
+                subtitle: 'Track skipped meals and counts',
+                icon: Icons.event_busy_rounded,
+                color: Colors.deepOrangeAccent,
+                onTap: () => Get.to(() => const AdminMealReportScreen()),
               ),
             ],
           ),
