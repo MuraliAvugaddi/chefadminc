@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../services/updateing_user_status_service.dart';
+import '../apis/apis_localhost.dart';
 
 class AdminController extends GetxController {
   var isLoading = true.obs;
@@ -25,19 +26,21 @@ class AdminController extends GetxController {
     super.onClose();
   }
 
-  // --- 🔌 SOCKET LISTENER ---
+  // --- 🔌 SOCKET LISTENER (Admin Side) ---
   void _initSocketListener() {
     try {
-      socket = IO.io('http://localhost:5000', <String, dynamic>{
+      socket = IO.io(ApiEndpoints.socketUrl, <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': true,
       });
 
       socket?.onConnect((_) {
-        print("Connected to socket server");
+        print("Connected to socket server on Admin side");
       });
 
+      // ✅ AUTOMATIC REFRESH: When any status changes or payment is recorded, re-fetch users instantly
       socket?.on('statusUpdated', (data) {
+        print("⚡ Real-time status update received! Refreshing user list...");
         fetchUsers();
       });
 
@@ -55,13 +58,15 @@ class AdminController extends GetxController {
         .where(
           (u) =>
               u.phonenumber.toLowerCase().contains(query) ||
-              u.enrollmentNo.toLowerCase().contains(query),
+              u.enrollmentNo.toLowerCase().contains(query) ||
+              u.name.toLowerCase().contains(query),
         )
         .toList();
   }
 
   List<AppUser> get filteredUsers => _searchBase;
 
+  // ✅ Fix for activeUsers and expiredUsers error in GridView
   List<AppUser> get activeUsers =>
       _searchBase.where((u) => u.isApproved.value).toList();
 
@@ -70,16 +75,14 @@ class AdminController extends GetxController {
 
   void updateSearchQuery(String query) => searchQuery.value = query;
 
-  // --- 📊 MESS MANAGER STATS COUNTERS ---
+  // --- 📊 STATS COUNTERS (Fixes stats row errors) ---
   int get totalUsersCount => _allUsers.length;
   int get totalActiveCount => _allUsers.where((u) => u.isApproved.value).length;
-  int get totalInactiveCount =>
-      _allUsers.where((u) => !u.isApproved.value).length;
+  int get totalInactiveCount => _allUsers.where((u) => !u.isApproved.value).length;
 
   // --- 🌐 API ACTIONS ---
   void fetchUsers() async {
     try {
-      isLoading.value = true;
       var fetchedUsers = await AdminService.fetchUsers();
       _allUsers.assignAll(fetchedUsers);
     } catch (e) {
@@ -94,9 +97,7 @@ class AdminController extends GetxController {
     user.isApproved.value = !originalStatus; // UI updates immediately
 
     try {
-      // Safely grab the ID depending on how your AppUser model stores it
       String userId = user.id;
-
       await AdminService.updateUserStatus(userId, user.isApproved.value);
       Get.snackbar(
         'Status Updated',
@@ -111,7 +112,7 @@ class AdminController extends GetxController {
     }
   }
 
-  // --- ⚠️ BULK ACTIONS ---
+  // --- ⚠️ BULK ACTIONS (Fixes Reset Month button error) ---
   void showDeactivateAllDialog(BuildContext context) {
     showCupertinoDialog(
       context: context,

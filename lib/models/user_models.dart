@@ -8,6 +8,7 @@ class AppUser {
   final String course;
   final String year;
   final String room;
+  final String gender; // ✅ Added gender
   RxBool isApproved;
 
   AppUser({
@@ -18,6 +19,7 @@ class AppUser {
     required this.course,
     required this.year,
     required this.room,
+    required this.gender,
     required bool approved,
   }) : isApproved = approved.obs;
 
@@ -30,6 +32,7 @@ class AppUser {
       course: json['course'] ?? 'N/A',
       year: json['year']?.toString() ?? 'N/A',
       room: json['room']?.toString() ?? 'N/A',
+      gender: json['gender'] ?? 'N/A', // ✅ Parsed from backend
       approved: json['isApproved'] ?? false,
     );
   }

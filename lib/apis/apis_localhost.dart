@@ -1,6 +1,13 @@
 class ApiEndpoints {
+  // 🚀 LIVE RENDER BACKEND URL (Currently Active)
   static const String baseUrl =
       "https://chefhospitality-backend-main.onrender.com/api";
+  static const String socketUrl =
+      "https://chefhospitality-backend-main.onrender.com"; // ✅ Added socketUrl
+
+  // 🏠 LOCAL COMPUTER / WIFI IP (Uncomment if testing locally)
+  // static const String baseUrl = "http://192.168.1.3:5000/api";
+  // static const String socketUrl = "http://192.168.1.3:5000";
 
   // Admin Routes
   static const String adminBase = "$baseUrl/admin";
@@ -9,6 +16,10 @@ class ApiEndpoints {
   static const String adminAllPayments = "$adminBase/all-payments";
   static const String adminSkipReport = "$adminBase/skip-report";
   static const String adminDayScholarOrders = "$adminBase/dayscholar-orders";
+
+  // Manual Offline Payment & Excel Export Routes
+  static const String adminManualPayment = "$adminBase/payments/manual";
+  static const String adminExportExcel = "$adminBase/reports/export-excel";
 
   // Menu Routes
   static const String menuActive = "$baseUrl/menu/active";
@@ -23,8 +34,7 @@ class ApiEndpoints {
   static const String specialFoodMenu = "$specialFoodBase/menu";
 
   // --- FEEDBACK ENDPOINT ---
-  static const String adminFeedbackList =
-      "$baseUrl/admin/feedback"; // 👈 Added here
+  static const String adminFeedbackList = "$baseUrl/admin/feedback";
 
   // Token Routes
   static const String tokenStats = "$baseUrl/tokens/stats";
