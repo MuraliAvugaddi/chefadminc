@@ -1,161 +1,190 @@
-import 'package:chefadmin/models/user_models.dart';
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import '../services/updateing_user_status_service.dart';
+import 'package:http/http.dart' as http;
+
 import '../apis/apis_localhost.dart';
+import '../models/user_models.dart';
 
 class AdminController extends GetxController {
-  var isLoading = true.obs;
-  final _allUsers = <AppUser>[].obs;
+  var usersList = <AppUser>[].obs;
+  var isLoading = false.obs;
   var searchQuery = ''.obs;
-
-  IO.Socket? socket;
 
   @override
   void onInit() {
     super.onInit();
     fetchUsers();
-    _initSocketListener();
   }
 
-  @override
-  void onClose() {
-    socket?.dispose();
-    super.onClose();
+  void updateSearchQuery(String query) {
+    searchQuery.value = query.toLowerCase().trim();
   }
 
-  // --- 🔌 SOCKET LISTENER (Admin Side) ---
-  void _initSocketListener() {
-    try {
-      socket = IO.io(ApiEndpoints.socketUrl, <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': true,
-      });
-
-      socket?.onConnect((_) {
-        print("Connected to socket server on Admin side");
-      });
-
-      // ✅ AUTOMATIC REFRESH: When any status changes or payment is recorded, re-fetch users instantly
-      socket?.on('statusUpdated', (data) {
-        print("⚡ Real-time status update received! Refreshing user list...");
-        fetchUsers();
-      });
-
-      socket?.onConnectError((err) => print("Socket connect error: $err"));
-    } catch (e) {
-      print("Socket error: $e");
+  List<AppUser> get filteredUsers {
+    if (searchQuery.value.isEmpty) {
+      return usersList;
     }
+    final q = searchQuery.value;
+    return usersList.where((u) {
+      final name = u.name.toLowerCase();
+      final phone = u.phonenumber.toLowerCase();
+      final enrollment = u.enrollmentNo.toLowerCase();
+      final room = u.room.toLowerCase();
+      return name.contains(q) || phone.contains(q) || enrollment.contains(q) || room.contains(q);
+    }).toList();
   }
 
-  // --- 🔍 FILTERING LOGIC ---
-  List<AppUser> get _searchBase {
-    if (searchQuery.value.isEmpty) return _allUsers;
-    String query = searchQuery.value.toLowerCase().trim();
-    return _allUsers
-        .where(
-          (u) =>
-              u.phonenumber.toLowerCase().contains(query) ||
-              u.enrollmentNo.toLowerCase().contains(query) ||
-              u.name.toLowerCase().contains(query),
-        )
-        .toList();
-  }
-
-  List<AppUser> get filteredUsers => _searchBase;
-
-  // ✅ Fix for activeUsers and expiredUsers error in GridView
   List<AppUser> get activeUsers =>
-      _searchBase.where((u) => u.isApproved.value).toList();
+      filteredUsers.where((u) => u.isApproved.value).toList();
 
   List<AppUser> get expiredUsers =>
-      _searchBase.where((u) => !u.isApproved.value).toList();
+      filteredUsers.where((u) => !u.isApproved.value).toList();
 
-  void updateSearchQuery(String query) => searchQuery.value = query;
+  int get totalUsersCount => usersList.length;
+  int get totalActiveCount => usersList.where((u) => u.isApproved.value).length;
+  int get totalInactiveCount => usersList.where((u) => !u.isApproved.value).length;
 
-  // --- 📊 STATS COUNTERS (Fixes stats row errors) ---
-  int get totalUsersCount => _allUsers.length;
-  int get totalActiveCount => _allUsers.where((u) => u.isApproved.value).length;
-  int get totalInactiveCount => _allUsers.where((u) => !u.isApproved.value).length;
-
-  // --- 🌐 API ACTIONS ---
-  void fetchUsers() async {
+  Future<void> fetchUsers() async {
     try {
-      var fetchedUsers = await AdminService.fetchUsers();
-      _allUsers.assignAll(fetchedUsers);
+      isLoading.value = true;
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.adminUsers),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        usersList.assignAll(data.map((item) => AppUser.fromJson(item)).toList());
+      } else {
+        Get.snackbar("Sync Warning", "Could not fetch students (${response.statusCode})");
+      }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch users: ${e.toString()}');
+      Get.snackbar("Network Issue", "Failed to connect to backend server: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  void toggleApproval(AppUser user) async {
-    bool originalStatus = user.isApproved.value;
-    user.isApproved.value = !originalStatus; // UI updates immediately
+  Future<void> toggleApproval(AppUser user) async {
+    final cleanId = user.id.trim();
+    if (cleanId.isEmpty || cleanId == 'N/A') {
+      Get.snackbar("Invalid Account", "This student record lacks a valid ID.");
+      return;
+    }
+
+    final originalStatus = user.isApproved.value;
+    final newStatus = !originalStatus;
+
+    // Optimistic UI state toggle
+    user.isApproved.value = newStatus;
+    usersList.refresh();
 
     try {
-      String userId = user.id;
-      await AdminService.updateUserStatus(userId, user.isApproved.value);
-      Get.snackbar(
-        'Status Updated',
-        "${user.name} is now ${user.isApproved.value ? 'Active' : 'Inactive'}",
-        backgroundColor: user.isApproved.value ? Colors.green : Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+      // 1. Try PATCH request to /users/:userId/status
+      final patchUrl = Uri.parse("${ApiEndpoints.adminUsers}/$cleanId/status");
+      var response = await http.patch(
+        patchUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+        },
+        body: jsonEncode({'isApproved': newStatus}),
       );
+
+      // 2. Fallback to PUT if PATCH fails (handles older backend builds)
+      if (response.statusCode != 200) {
+        final putUrl = Uri.parse("${ApiEndpoints.adminUsers}/$cleanId/status");
+        response = await http.put(
+          putUrl,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+          },
+          body: jsonEncode({'isApproved': newStatus}),
+        );
+      }
+
+      if (response.statusCode == 200) {
+        Get.snackbar(
+          "Status Updated",
+          "${user.name} is now ${newStatus ? 'ACTIVE' : 'DEACTIVATED'}.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: newStatus ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      } else {
+        // Revert on failure
+        user.isApproved.value = originalStatus;
+        usersList.refresh();
+        Get.snackbar(
+          "Update Failed",
+          "Server returned status code: ${response.statusCode}",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
-      user.isApproved.value = originalStatus; // Rollback if server fails
-      Get.snackbar('Error', 'Update failed for ${user.name}');
+      user.isApproved.value = originalStatus;
+      usersList.refresh();
+      Get.snackbar(
+        "Connection Error",
+        "Could not contact server: $e",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
-  // --- ⚠️ BULK ACTIONS (Fixes Reset Month button error) ---
   void showDeactivateAllDialog(BuildContext context) {
-    showCupertinoDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return CupertinoAlertDialog(
-          title: const Text('Confirm Action'),
-          content: const Text(
-            'Are you sure you want to deactivate ALL users? This will stop everyone from generating tokens until you re-approve them.',
-          ),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text('Cancel', style: TextStyle(color: Colors.blue)),
-              onPressed: () => Navigator.of(ctx).pop(),
-            ),
-            CupertinoDialogAction(
-              isDestructiveAction: true,
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                _deactivateAllUsers();
-              },
-              child: const Text('Deactivate All'),
-            ),
-          ],
-        );
+    Get.defaultDialog(
+      title: "Reset Month Access",
+      middleText: "Are you sure you want to deactivate mess access for ALL students?",
+      textConfirm: "Deactivate All",
+      textCancel: "Cancel",
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.red,
+      onConfirm: () async {
+        Get.back();
+        await deactivateAll();
       },
     );
   }
 
-  Future<void> _deactivateAllUsers() async {
+  Future<void> deactivateAll() async {
     try {
       isLoading.value = true;
-      await AdminService.deactivateAllUsers();
-      fetchUsers();
-
-      Get.snackbar(
-        'Success',
-        'All users have been deactivated for the new month.',
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+      final response = await http.patch(
+        Uri.parse("${ApiEndpoints.adminUsers}/deactivate-all"),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+        },
       );
+
+      if (response.statusCode == 200) {
+        for (var u in usersList) {
+          u.isApproved.value = false;
+        }
+        usersList.refresh();
+        Get.snackbar(
+          "Access Cleared",
+          "All students set to inactive for the new cycle.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar("Error", "Failed to reset student access.");
+      }
     } catch (e) {
-      Get.snackbar('Error', 'Bulk deactivation failed: ${e.toString()}');
+      Get.snackbar("Error", "Network error during reset: $e");
     } finally {
       isLoading.value = false;
     }

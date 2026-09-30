@@ -1,9 +1,11 @@
 class ApiEndpoints {
   // 🚀 LIVE RENDER BACKEND URL (Currently Active)
   static const String baseUrl =
-      "https://chefhospitality-backend-main.onrender.com/api";
+        "https://chefhospitality-backend-main.onrender.com/api";
+   //   "http://192.168.100.207:5000/api";
   static const String socketUrl =
-      "https://chefhospitality-backend-main.onrender.com"; // ✅ Added socketUrl
+    "https://chefhospitality-backend-main.onrender.com"; // ✅ Added socketUrl
+    //  "http://192.168.100.207:5000";
 
   // 🏠 LOCAL COMPUTER / WIFI IP (Uncomment if testing locally)
   // static const String baseUrl = "http://192.168.1.3:5000/api";
