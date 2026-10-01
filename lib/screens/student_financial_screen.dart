@@ -44,13 +44,10 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
   final AdminController adminController = Get.put(AdminController());
 
   String selectedGender = 'All';
-  String selectedMonth = 'October 2026'; // Defaults directly to active month
+  String selectedMonth = 'October 2026';
   bool showUnpaidOnly = false;
 
-  // Cached O(1) set of paid student IDs for the currently selected month
   final Set<String> _currentMonthPaidUserIds = {};
-  
-  // Storage for dialog UTRs: userId -> { monthName -> utr }
   final Map<String, Map<String, String>> _userPaymentMap = {};
   bool _isLoadingPayments = false;
 
@@ -59,7 +56,6 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  // Dynamically generated months list ensuring October is always included
   List<String> get monthsList {
     final now = DateTime.now();
     final cur = '${_monthNames[now.month - 1]} ${now.year}';
@@ -139,7 +135,6 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     }
   }
 
-  // Precomputes the Set in O(N) once so build runs in O(1) time
   void _recalculateCurrentMonthPaidSet() {
     _currentMonthPaidUserIds.clear();
     final target = selectedMonth.toLowerCase().trim();
@@ -178,19 +173,19 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 850;
+              final isMobile = constraints.maxWidth < 750;
 
               return Column(
                 children: [
-                  _buildMetricsSummaryBar(isCompact),
-                  _buildFilterToolbar(isCompact),
-                  _buildTabs(isCompact),
+                  _buildMetricsSummaryBar(isMobile),
+                  _buildFilterToolbar(isMobile),
+                  _buildTabs(isMobile),
                   Expanded(
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildStudentListView(isJunior: true, isCompact: isCompact),
-                        _buildStudentListView(isJunior: false, isCompact: isCompact),
+                        _buildStudentListView(isJunior: true, isMobile: isMobile),
+                        _buildStudentListView(isJunior: false, isMobile: isMobile),
                       ],
                     ),
                   ),
@@ -210,7 +205,7 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
       scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
       leading: Padding(
-        padding: const EdgeInsets.only(left: 12),
+        padding: const EdgeInsets.only(left: 6),
         child: IconButton(
           tooltip: 'Back',
           onPressed: () {
@@ -220,20 +215,20 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
               Get.back();
             }
           },
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1A1A1A), size: 19),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1A1A1A), size: 18),
         ),
       ),
-      toolbarHeight: 62,
-      titleSpacing: 4,
+      toolbarHeight: 60,
+      titleSpacing: 0,
       title: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(color: ChefColors.primarySoft, borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.restaurant_rounded, color: ChefColors.primary, size: 20),
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(color: ChefColors.primarySoft, borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.restaurant_rounded, color: ChefColors.primary, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,13 +238,13 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
                   'Chef Hospitality',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(color: const Color(0xFF1A1A1A), fontSize: 15.5, fontWeight: FontWeight.w700),
+                  style: GoogleFonts.poppins(color: const Color(0xFF1A1A1A), fontSize: 14.5, fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  'Student finance & access',
+                  'Finance & Mess Access',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(color: const Color(0xFF5F4B00), fontSize: 11, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.poppins(color: const Color(0xFF5F4B00), fontSize: 10, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -260,11 +255,10 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
         IconButton(
           tooltip: 'Sync Data',
           onPressed: () => _loadAllData(),
-          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1A1A1A)),
+          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF1A1A1A), size: 20),
         ),
-        const SizedBox(width: 8),
         Padding(
-          padding: const EdgeInsets.only(right: 16),
+          padding: const EdgeInsets.only(right: 12),
           child: _buildExcelExportButton(),
         ),
       ],
@@ -275,13 +269,13 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     );
   }
 
-  Widget _buildTabs(bool isCompact) {
+  Widget _buildTabs(bool isMobile) {
     return Container(
-      margin: EdgeInsets.fromLTRB(isCompact ? 12 : 20, 3, isCompact ? 12 : 20, 5),
+      margin: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 18, vertical: 4),
       padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(color: const Color(0xFFEFF3F8), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: const Color(0xFFEFF3F8), borderRadius: BorderRadius.circular(10)),
       child: SizedBox(
-        height: 38,
+        height: 36,
         child: TabBar(
           controller: _tabController,
           dividerColor: Colors.transparent,
@@ -289,29 +283,27 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
           indicator: BoxDecoration(
             color: ChefColors.primary,
             borderRadius: BorderRadius.circular(8),
-            boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 5, offset: Offset(0, 2))],
+            boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 4, offset: Offset(0, 1))],
           ),
           labelColor: const Color(0xFF1A1A1A),
           unselectedLabelColor: ChefColors.muted,
-          labelStyle: GoogleFonts.poppins(fontSize: isCompact ? 11 : 12, fontWeight: FontWeight.w700),
-          unselectedLabelStyle: GoogleFonts.poppins(fontSize: isCompact ? 11 : 12, fontWeight: FontWeight.w500),
+          labelStyle: GoogleFonts.poppins(fontSize: isMobile ? 11 : 12, fontWeight: FontWeight.w700),
+          unselectedLabelStyle: GoogleFonts.poppins(fontSize: isMobile ? 11 : 12, fontWeight: FontWeight.w500),
           tabs: const [Tab(text: 'Juniors · 1st Year'), Tab(text: 'Seniors · 2nd–5th Year')],
         ),
       ),
     );
   }
 
-  Widget _buildMetricsSummaryBar(bool isCompact) {
+  Widget _buildMetricsSummaryBar(bool isMobile) {
     return Obx(() {
       final allUsers = adminController.filteredUsers;
       final totalCount = allUsers.length;
-
-      // O(1) set membership check instead of inner loop
       final activeCount = allUsers.where((u) => _currentMonthPaidUserIds.contains(u.id)).length;
       final noAccessCount = totalCount - activeCount;
 
       return Padding(
-        padding: EdgeInsets.fromLTRB(isCompact ? 12 : 20, 8, isCompact ? 12 : 20, 2),
+        padding: EdgeInsets.fromLTRB(isMobile ? 12 : 18, 8, isMobile ? 12 : 18, 4),
         child: Row(
           children: [
             Expanded(
@@ -321,9 +313,10 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
                 icon: Icons.people_alt_outlined,
                 iconBackground: ChefColors.primarySoft,
                 iconColor: ChefColors.primary,
+                isMobile: isMobile,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildMetricCard(
                 title: 'Active Access',
@@ -331,9 +324,10 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
                 icon: Icons.verified_outlined,
                 iconBackground: ChefColors.successSoft,
                 iconColor: ChefColors.success,
+                isMobile: isMobile,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildMetricCard(
                 title: 'Needs Attention',
@@ -341,6 +335,7 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
                 icon: Icons.warning_amber_rounded,
                 iconBackground: ChefColors.warningSoft,
                 iconColor: ChefColors.warning,
+                isMobile: isMobile,
               ),
             ),
           ],
@@ -355,32 +350,40 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     required IconData icon,
     required Color iconBackground,
     required Color iconColor,
+    required bool isMobile,
   }) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      height: isMobile ? 58 : 64,
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: ChefColors.border),
       ),
       child: Row(
         children: [
           Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(color: iconBackground, borderRadius: BorderRadius.circular(11)),
-            child: Icon(icon, color: iconColor, size: 18),
+            width: isMobile ? 28 : 34,
+            height: isMobile ? 28 : 34,
+            decoration: BoxDecoration(color: iconBackground, borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, color: iconColor, size: isMobile ? 15 : 18),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: isMobile ? 6 : 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(color: ChefColors.muted, fontSize: 10.5, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(count, style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 18, fontWeight: FontWeight.w800, height: 1.0)),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(color: ChefColors.muted, fontSize: isMobile ? 9 : 10.5, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  count,
+                  style: GoogleFonts.poppins(color: ChefColors.text, fontSize: isMobile ? 15 : 18, fontWeight: FontWeight.w800, height: 1.1),
+                ),
               ],
             ),
           ),
@@ -389,11 +392,69 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     );
   }
 
-  Widget _buildFilterToolbar(bool isCompact) {
+  Widget _buildFilterToolbar(bool isMobile) {
+    if (isMobile) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: ChefColors.border)),
+        child: Column(
+          children: [
+            TextField(
+              onChanged: adminController.updateSearchQuery,
+              style: GoogleFonts.poppins(fontSize: 12, color: ChefColors.text),
+              decoration: const InputDecoration(
+                isDense: true,
+                hintText: 'Search name, phone or ID...',
+                prefixIcon: Icon(Icons.search_rounded, color: ChefColors.primary, size: 18),
+                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                border: InputBorder.none,
+              ),
+            ),
+            const Divider(height: 12, color: ChefColors.border),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _buildFilterDropdown(
+                    value: selectedGender,
+                    icon: Icons.people_outline_rounded,
+                    items: const ['All', 'Male', 'Female'],
+                    onChanged: (val) {
+                      if (val != null) setState(() => selectedGender = val);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  flex: 4,
+                  child: _buildFilterDropdown(
+                    value: selectedMonth,
+                    icon: Icons.calendar_month_outlined,
+                    items: monthsList,
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          selectedMonth = val;
+                          _recalculateCurrentMonthPaidSet();
+                        });
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _buildUnpaidFilter(isMobile: true),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
-      margin: EdgeInsets.fromLTRB(isCompact ? 12 : 20, 6, isCompact ? 12 : 20, 2),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13), border: Border.all(color: ChefColors.border)),
+      margin: const EdgeInsets.fromLTRB(18, 6, 18, 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: ChefColors.border)),
       child: Row(
         children: [
           Expanded(
@@ -404,7 +465,7 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
                 isDense: true,
                 hintText: 'Search name, phone or student ID',
                 prefixIcon: Icon(Icons.search_rounded, color: ChefColors.primary),
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 border: InputBorder.none,
               ),
             ),
@@ -421,7 +482,7 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
               },
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           SizedBox(
             width: 175,
             child: _buildFilterDropdown(
@@ -438,8 +499,8 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
               },
             ),
           ),
-          const SizedBox(width: 10),
-          _buildUnpaidFilter(),
+          const SizedBox(width: 8),
+          _buildUnpaidFilter(isMobile: false),
         ],
       ),
     );
@@ -454,45 +515,49 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     final effectiveValue = items.contains(value) ? value : items.first;
 
     return SizedBox(
-      height: 44,
+      height: 38,
       child: DropdownButtonFormField<String>(
         value: effectiveValue,
         isExpanded: true,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: ChefColors.muted, size: 20),
+        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: ChefColors.muted, size: 18),
         decoration: InputDecoration(
           filled: true,
           fillColor: const Color(0xFFFAFBFD),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          prefixIcon: Icon(icon, size: 17, color: ChefColors.primary),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: ChefColors.border)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: ChefColors.border)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          prefixIcon: Icon(icon, size: 15, color: ChefColors.primary),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: ChefColors.border)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: ChefColors.border)),
         ),
-        style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 12, fontWeight: FontWeight.w600),
+        style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 11, fontWeight: FontWeight.w600),
         items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, overflow: TextOverflow.ellipsis))).toList(),
         onChanged: onChanged,
       ),
     );
   }
 
-  Widget _buildUnpaidFilter() {
+  Widget _buildUnpaidFilter({required bool isMobile}) {
     return FilterChip(
       selected: showUnpaidOnly,
       showCheckmark: false,
       avatar: Icon(
         showUnpaidOnly ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-        size: 17,
+        size: 15,
         color: showUnpaidOnly ? const Color(0xFF8A6800) : ChefColors.muted,
       ),
-      label: const Text('Unpaid only'),
+      label: Text(isMobile ? 'Unpaid' : 'Unpaid only'),
       selectedColor: ChefColors.primarySoft,
       backgroundColor: const Color(0xFFFAFBFD),
       side: BorderSide(color: showUnpaidOnly ? ChefColors.primary : ChefColors.border),
-      labelStyle: GoogleFonts.poppins(color: showUnpaidOnly ? const Color(0xFF6B5200) : ChefColors.text, fontSize: 12, fontWeight: FontWeight.w600),
+      labelStyle: GoogleFonts.poppins(
+        color: showUnpaidOnly ? const Color(0xFF6B5200) : ChefColors.text,
+        fontSize: isMobile ? 10.5 : 11.5,
+        fontWeight: FontWeight.w600,
+      ),
       onSelected: (val) => setState(() => showUnpaidOnly = val),
     );
   }
 
-  Widget _buildStudentListView({required bool isJunior, required bool isCompact}) {
+  Widget _buildStudentListView({required bool isJunior, required bool isMobile}) {
     return Obx(() {
       if (adminController.isLoading.value || _isLoadingPayments) {
         return const Center(child: CircularProgressIndicator(color: ChefColors.primary, strokeWidth: 2.5));
@@ -509,52 +574,188 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
       if (filtered.isEmpty) return _buildEmptyState();
 
       return ListView.separated(
-        padding: EdgeInsets.fromLTRB(isCompact ? 12 : 20, 4, isCompact ? 12 : 20, 20),
+        padding: EdgeInsets.fromLTRB(isMobile ? 12 : 18, 4, isMobile ? 12 : 18, 20),
         itemCount: filtered.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final student = filtered[index];
           final isPaid = _currentMonthPaidUserIds.contains(student.id);
-          return _buildStudentCard(student, isPaid: isPaid, isCompact: isCompact);
+          return _buildStudentCard(student, isPaid: isPaid, isMobile: isMobile);
         },
       );
     });
   }
 
-  Widget _buildStudentCard(AppUser student, {required bool isPaid, required bool isCompact}) {
+  Widget _buildStudentCard(AppUser student, {required bool isPaid, required bool isMobile}) {
     final initial = student.name.trim().isNotEmpty ? student.name.trim()[0].toUpperCase() : '?';
 
+    if (isMobile) {
+      // Mobile-friendly Card Layout
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: ChefColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: isPaid ? ChefColors.primarySoft : const Color(0xFFF1F3F6),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initial,
+                    style: GoogleFonts.poppins(color: isPaid ? ChefColors.primaryDark : ChefColors.muted, fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        student.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 13.5, fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        'Room ${student.room} • ${student.course}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(color: ChefColors.muted, fontSize: 10.5),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isPaid ? ChefColors.successSoft : ChefColors.dangerSoft,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    isPaid ? 'PAID' : 'UNPAID',
+                    style: GoogleFonts.poppins(color: isPaid ? ChefColors.success : ChefColors.danger, fontSize: 8.5, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                _infoChip(Icons.badge_outlined, student.enrollmentNo),
+                _infoChip(Icons.phone_outlined, student.phonenumber),
+                if (student.fatherPhone.isNotEmpty)
+                  _infoChip(Icons.family_restroom_outlined, 'F: ${student.fatherPhone}'),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showManualPaymentDialog(student),
+                    icon: const Icon(Icons.payments_outlined, size: 14),
+                    label: const Text('Record payment'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: ChefColors.primaryDark,
+                      side: const BorderSide(color: ChefColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      textStyle: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => adminController.toggleApproval(student),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isPaid ? ChefColors.dangerSoft : ChefColors.primary,
+                      foregroundColor: isPaid ? ChefColors.danger : Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text(
+                      isPaid ? 'Revoke access' : 'Grant access',
+                      style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Laptop/Desktop Table/Card Row
     return Container(
-      padding: EdgeInsets.all(isCompact ? 12 : 13),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: ChefColors.border)),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ChefColors.border),
+      ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(color: isPaid ? ChefColors.primarySoft : const Color(0xFFF1F3F6), borderRadius: BorderRadius.circular(13)),
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: isPaid ? ChefColors.primarySoft : const Color(0xFFF1F3F6),
+              borderRadius: BorderRadius.circular(11),
+            ),
             alignment: Alignment.center,
-            child: Text(initial, style: GoogleFonts.poppins(color: isPaid ? ChefColors.primaryDark : ChefColors.muted, fontSize: 18, fontWeight: FontWeight.w800)),
+            child: Text(
+              initial,
+              style: GoogleFonts.poppins(color: isPaid ? ChefColors.primaryDark : ChefColors.muted, fontSize: 17, fontWeight: FontWeight.w800),
+            ),
           ),
-          const SizedBox(width: 13),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Flexible(child: Text(student.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 14, fontWeight: FontWeight.w700))),
-                    const SizedBox(width: 7),
+                    Flexible(
+                      child: Text(
+                        student.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 13.5, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: isPaid ? ChefColors.successSoft : ChefColors.dangerSoft, borderRadius: BorderRadius.circular(20)),
-                      child: Text(isPaid ? 'PAID' : 'UNPAID', style: GoogleFonts.poppins(color: isPaid ? ChefColors.success : ChefColors.danger, fontSize: 8.5, fontWeight: FontWeight.w800)),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isPaid ? ChefColors.successSoft : ChefColors.dangerSoft,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        isPaid ? 'PAID' : 'UNPAID',
+                        style: GoogleFonts.poppins(color: isPaid ? ChefColors.success : ChefColors.danger, fontSize: 8.5, fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 4),
                 Wrap(
-                  spacing: 10,
+                  spacing: 12,
                   children: [
                     Text(student.enrollmentNo, style: GoogleFonts.poppins(color: ChefColors.muted, fontSize: 10.5)),
                     Text('Room ${student.room}', style: GoogleFonts.poppins(color: ChefColors.muted, fontSize: 10.5)),
@@ -565,21 +766,26 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           OutlinedButton.icon(
             onPressed: () => _showManualPaymentDialog(student),
-            icon: const Icon(Icons.payments_outlined, size: 17),
+            icon: const Icon(Icons.payments_outlined, size: 15),
             label: const Text('Record payment'),
             style: OutlinedButton.styleFrom(
               foregroundColor: ChefColors.primaryDark,
               side: const BorderSide(color: ChefColors.primary),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              textStyle: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(width: 8),
           TextButton(
             onPressed: () => adminController.toggleApproval(student),
-            style: TextButton.styleFrom(foregroundColor: isPaid ? ChefColors.danger : ChefColors.success),
+            style: TextButton.styleFrom(
+              foregroundColor: isPaid ? ChefColors.danger : ChefColors.success,
+              textStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700),
+            ),
             child: Text(isPaid ? 'Revoke access' : 'Grant access'),
           ),
         ],
@@ -587,16 +793,27 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     );
   }
 
+  Widget _infoChip(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: ChefColors.muted),
+        const SizedBox(width: 3),
+        Text(text.isEmpty ? '—' : text, style: GoogleFonts.poppins(color: ChefColors.muted, fontSize: 10)),
+      ],
+    );
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.search_off_rounded, color: ChefColors.primary, size: 38),
-            const SizedBox(height: 10),
-            Text('No students found', style: GoogleFonts.poppins(color: ChefColors.text, fontWeight: FontWeight.w700, fontSize: 15)),
+            const Icon(Icons.search_off_rounded, color: ChefColors.primary, size: 36),
+            const SizedBox(height: 8),
+            Text('No students found', style: GoogleFonts.poppins(color: ChefColors.text, fontWeight: FontWeight.w700, fontSize: 14)),
           ],
         ),
       ),
@@ -609,7 +826,6 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     final dateController = TextEditingController(text: DateTime.now().toIso8601String().split('T').first);
     final utrController = TextEditingController();
 
-    // Default to the current active calendar month automatically
     final now = DateTime.now();
     final realMonth = '${_monthNames[now.month - 1]} ${now.year}';
     String selectedMonthInDialog = realMonth;
@@ -627,42 +843,47 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
     Get.dialog(
       Dialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: 480),
           child: StatefulBuilder(
             builder: (dialogContext, setDialogState) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Container(
-                          width: 42,
-                          height: 42,
+                          width: 38,
+                          height: 38,
                           decoration: const BoxDecoration(color: ChefColors.primarySoft, shape: BoxShape.circle),
-                          child: const Icon(Icons.receipt_long_rounded, color: ChefColors.primary),
+                          child: const Icon(Icons.receipt_long_rounded, color: ChefColors.primary, size: 20),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Record / Edit payment', style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 16, fontWeight: FontWeight.w800)),
+                              Text('Record Payment', style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 15, fontWeight: FontWeight.w800)),
                               Text(student.name, style: GoogleFonts.poppins(color: ChefColors.muted, fontSize: 11)),
                             ],
                           ),
                         ),
-                        IconButton(onPressed: () => Navigator.of(dialogContext).pop(), icon: const Icon(Icons.close_rounded)),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    Text('Select Month', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
+                    Text('Select Month', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
 
-                    // Renders all month cards with Green PAID vs Red PENDING
                     ...dialogMonthsList.map((mName) {
                       final prefix = mName.split(' ')[0].toLowerCase();
                       final isPaid = userPaidSet.keys.any((k) => k.contains(prefix));
@@ -681,32 +902,41 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
                       );
                     }),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     TextField(
                       controller: amountController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Amount per month (₹)', prefixIcon: Icon(Icons.currency_rupee_rounded)),
+                      decoration: const InputDecoration(labelText: 'Amount (₹)', prefixIcon: Icon(Icons.currency_rupee_rounded, size: 18)),
                     ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: utrController,
-                      decoration: InputDecoration(labelText: 'UTR / Receipt ID for $selectedMonthInDialog *', prefixIcon: const Icon(Icons.confirmation_number_outlined)),
+                      decoration: InputDecoration(
+                        labelText: 'UTR / Receipt ID for $selectedMonthInDialog *',
+                        prefixIcon: const Icon(Icons.confirmation_number_outlined, size: 18),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: fatherPhoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(labelText: "Father's Phone Number", prefixIcon: Icon(Icons.family_restroom_outlined)),
+                      decoration: const InputDecoration(
+                        labelText: "Father's Phone Number",
+                        prefixIcon: Icon(Icons.family_restroom_outlined, size: 18),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: dateController,
-                      decoration: const InputDecoration(labelText: 'Payment date (YYYY-MM-DD)', prefixIcon: Icon(Icons.calendar_today_outlined)),
+                      decoration: const InputDecoration(
+                        labelText: 'Payment date (YYYY-MM-DD)',
+                        prefixIcon: Icon(Icons.calendar_today_outlined, size: 18),
+                      ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 44,
                       child: ElevatedButton.icon(
                         onPressed: () async {
                           if (utrController.text.trim().isEmpty) {
@@ -738,8 +968,8 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
                             Get.snackbar('Error', 'Server connection error.', backgroundColor: ChefColors.danger, colorText: Colors.white);
                           }
                         },
-                        icon: const Icon(Icons.check_rounded, size: 18),
-                        label: Text('Save $selectedMonthInDialog payment & approve', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
+                        icon: const Icon(Icons.check_rounded, size: 16),
+                        label: Text('Save Payment & Approve', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700)),
                         style: ElevatedButton.styleFrom(backgroundColor: ChefColors.primary, foregroundColor: Colors.white, elevation: 0),
                       ),
                     ),
@@ -764,31 +994,31 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(11),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(11), border: Border.all(color: borderColor, width: 1.4)),
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(8), border: Border.all(color: borderColor, width: 1.2)),
         child: Row(
           children: [
             Container(
-              width: 20,
-              height: 20,
+              width: 18,
+              height: 18,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
                 color: isSelected ? const Color(0xFFF59E0B) : Colors.transparent,
-                border: Border.all(color: isSelected ? const Color(0xFFF59E0B) : (isPaid ? const Color(0xFF22C55E) : const Color(0xFFEF4444)), width: 1.8),
+                border: Border.all(color: isSelected ? const Color(0xFFF59E0B) : (isPaid ? const Color(0xFF22C55E) : const Color(0xFFEF4444)), width: 1.5),
               ),
-              child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+              child: isSelected ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
             ),
-            const SizedBox(width: 10),
-            Expanded(child: Text(monthName, style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 13, fontWeight: FontWeight.w600))),
+            const SizedBox(width: 8),
+            Expanded(child: Text(monthName, style: GoogleFonts.poppins(color: ChefColors.text, fontSize: 12, fontWeight: FontWeight.w600))),
             if (isSelected)
-              Text('SELECTED', style: GoogleFonts.poppins(color: const Color(0xFFB45309), fontSize: 10.5, fontWeight: FontWeight.w800))
+              Text('SELECTED', style: GoogleFonts.poppins(color: const Color(0xFFB45309), fontSize: 9.5, fontWeight: FontWeight.w800))
             else if (isPaid)
-              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(6)), child: Text('PAID', style: GoogleFonts.poppins(color: const Color(0xFF16A34A), fontSize: 10, fontWeight: FontWeight.w800)))
+              Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(4)), child: Text('PAID', style: GoogleFonts.poppins(color: const Color(0xFF16A34A), fontSize: 9, fontWeight: FontWeight.w800)))
             else
-              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFFEE2E2), borderRadius: BorderRadius.circular(6)), child: Text('PENDING', style: GoogleFonts.poppins(color: const Color(0xFFDC2626), fontSize: 10, fontWeight: FontWeight.w800))),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFFEE2E2), borderRadius: BorderRadius.circular(4)), child: Text('PENDING', style: GoogleFonts.poppins(color: const Color(0xFFDC2626), fontSize: 9, fontWeight: FontWeight.w800))),
           ],
         ),
       ),
@@ -809,12 +1039,13 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
           html.Url.revokeObjectUrl(url);
         }
       },
-      icon: const Icon(Icons.file_download_outlined, size: 18),
-      label: Text(showUnpaidOnly ? 'Export Unpaid Excel' : 'Export Excel', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700)),
+      icon: const Icon(Icons.file_download_outlined, size: 16),
+      label: Text(showUnpaidOnly ? 'Unpaid' : 'Excel', style: GoogleFonts.poppins(fontSize: 10.5, fontWeight: FontWeight.w700)),
       style: OutlinedButton.styleFrom(
         foregroundColor: const Color(0xFF1A1A1A),
         side: const BorderSide(color: Color(0xFF1A1A1A)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
