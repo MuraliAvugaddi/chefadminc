@@ -27,14 +27,19 @@ class AppUser {
     this.accessExpiresAt,
   }) : isApproved = RxBool(isApproved);
 
+  // Checks both manual approval AND whether the expiry date is in the future
+  bool get hasValidAccess {
+    if (!isApproved.value) return false;
+    if (accessExpiresAt == null) return true;
+    return accessExpiresAt!.isAfter(DateTime.now());
+  }
+
   factory AppUser.fromJson(Map<String, dynamic> json) {
-    // Read both _id and id safely
     final rawId = json['_id'] ?? json['id'];
     final resolvedId = (rawId != null && rawId.toString().isNotEmpty)
         ? rawId.toString().trim()
         : '';
 
-    // Handle boolean, string, or number conversions for approval
     final rawApproved = json['isApproved'];
     bool approved = false;
     if (rawApproved is bool) {
@@ -43,6 +48,15 @@ class AppUser {
       approved = rawApproved == 1;
     } else if (rawApproved != null) {
       approved = rawApproved.toString().trim().toLowerCase() == 'true';
+    }
+
+    final expiresAt = json['accessExpiresAt'] != null
+        ? DateTime.tryParse(json['accessExpiresAt'].toString())
+        : null;
+
+    // If an expiry date exists and it has already passed, treat as not approved
+    if (expiresAt != null && expiresAt.isBefore(DateTime.now())) {
+      approved = false;
     }
 
     return AppUser(
@@ -56,9 +70,7 @@ class AppUser {
       gender: (json['gender'] ?? 'All').toString().trim(),
       fatherPhone: (json['fatherPhone'] ?? json['father_phone'] ?? '').toString().trim(),
       isApproved: approved,
-      accessExpiresAt: json['accessExpiresAt'] != null
-          ? DateTime.tryParse(json['accessExpiresAt'].toString())
-          : null,
+      accessExpiresAt: expiresAt,
     );
   }
 

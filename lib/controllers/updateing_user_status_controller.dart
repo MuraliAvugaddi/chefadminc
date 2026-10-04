@@ -31,19 +31,23 @@ class AdminController extends GetxController {
       final phone = u.phonenumber.toLowerCase();
       final enrollment = u.enrollmentNo.toLowerCase();
       final room = u.room.toLowerCase();
-      return name.contains(q) || phone.contains(q) || enrollment.contains(q) || room.contains(q);
+      return name.contains(q) ||
+          phone.contains(q) ||
+          enrollment.contains(q) ||
+          room.contains(q);
     }).toList();
   }
 
+  // Uses hasValidAccess to accurately separate active vs expired students
   List<AppUser> get activeUsers =>
-      filteredUsers.where((u) => u.isApproved.value).toList();
+      filteredUsers.where((u) => u.hasValidAccess).toList();
 
   List<AppUser> get expiredUsers =>
-      filteredUsers.where((u) => !u.isApproved.value).toList();
+      filteredUsers.where((u) => !u.hasValidAccess).toList();
 
   int get totalUsersCount => usersList.length;
-  int get totalActiveCount => usersList.where((u) => u.isApproved.value).length;
-  int get totalInactiveCount => usersList.where((u) => !u.isApproved.value).length;
+  int get totalActiveCount => usersList.where((u) => u.hasValidAccess).length;
+  int get totalInactiveCount => usersList.where((u) => !u.hasValidAccess).length;
 
   Future<void> fetchUsers() async {
     try {
@@ -76,15 +80,14 @@ class AdminController extends GetxController {
       return;
     }
 
-    final originalStatus = user.isApproved.value;
+    final originalStatus = user.hasValidAccess;
     final newStatus = !originalStatus;
 
-    // Optimistic UI state toggle
+    // Optimistic UI update
     user.isApproved.value = newStatus;
     usersList.refresh();
 
     try {
-      // 1. Try PATCH request to /users/:userId/status
       final patchUrl = Uri.parse("${ApiEndpoints.adminUsers}/$cleanId/status");
       var response = await http.patch(
         patchUrl,
@@ -95,7 +98,6 @@ class AdminController extends GetxController {
         body: jsonEncode({'isApproved': newStatus}),
       );
 
-      // 2. Fallback to PUT if PATCH fails (handles older backend builds)
       if (response.statusCode != 200) {
         final putUrl = Uri.parse("${ApiEndpoints.adminUsers}/$cleanId/status");
         response = await http.put(
@@ -118,7 +120,6 @@ class AdminController extends GetxController {
           duration: const Duration(seconds: 2),
         );
       } else {
-        // Revert on failure
         user.isApproved.value = originalStatus;
         usersList.refresh();
         Get.snackbar(

@@ -9,15 +9,21 @@ class AdminService {
   // Fetch all users
   static Future<List<AppUser>> fetchUsers() async {
     try {
-      final response = await http.get(Uri.parse(ApiEndpoints.adminUsers));
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.adminUsers),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+        },
+      );
       if (response.statusCode == 200) {
         List<dynamic> body = json.decode(response.body);
         return body.map((dynamic item) => AppUser.fromJson(item)).toList();
       } else {
-        throw Exception('Failed to load users');
+        throw Exception('Failed to load users: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Connection error');
+      throw Exception('Connection error: $e');
     }
   }
 
@@ -26,7 +32,10 @@ class AdminService {
 
     final response = await http.patch(
       Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+      },
       body: json.encode({'isApproved': isApproved}),
     );
 
@@ -38,15 +47,17 @@ class AdminService {
   static Future<void> deactivateAllUsers() async {
     final response = await http.patch(
       Uri.parse('${ApiEndpoints.adminUsers}/deactivate-all'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+      },
     );
     if (response.statusCode != 200) {
-      throw Exception(
-        'Deactivate all failed with status: ${response.statusCode}',
-      );
+      throw Exception('Deactivate all failed with status: ${response.statusCode}');
     }
   }
 
-  // ✅ Fetch Global Payments with optional DateTime date parameter
+  // Fetch Global Payments with optional DateTime date parameter
   static Future<List<dynamic>> fetchGlobalPayments(
     String month,
     String gender, {
@@ -75,9 +86,7 @@ class AdminService {
     throw Exception('Skip report failed');
   }
 
-  // ============================================================
-  // ✅ FETCH STUDENT FEEDBACK METHOD (Admin Side)
-  // ============================================================
+  // Fetch Student Feedback
   static Future<List<dynamic>> fetchStudentFeedback({DateTime? date}) async {
     try {
       final box = GetStorage();

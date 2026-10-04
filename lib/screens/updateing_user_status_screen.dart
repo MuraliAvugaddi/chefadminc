@@ -81,7 +81,7 @@ class UpdateingUserStatusScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 1200),
             child: Column(
               children: [
-                // --- 📊 RESPONSIVE STATS ROW ---
+                // --- 📊 STATS ROW ---
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Obx(() {
@@ -118,7 +118,7 @@ class UpdateingUserStatusScreen extends StatelessWidget {
                   }),
                 ),
 
-                // --- 🔍 SLIM SEARCH BAR ---
+                // --- 🔍 SEARCH BAR ---
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
                   child: Container(
@@ -298,7 +298,6 @@ class UpdateingUserStatusScreen extends StatelessWidget {
   }
 }
 
-// --- 💳 COMPACT MODERN DASHBOARD CARD ---
 class UserStatusCard extends StatefulWidget {
   final AppUser user;
   final AdminController controller;
@@ -379,7 +378,7 @@ class _UserStatusCardState extends State<UserStatusCard> {
                         ),
                       ),
                       Obx(() {
-                        bool isActive = widget.user.isApproved.value;
+                        bool isActive = widget.user.hasValidAccess;
                         return Text(
                           isActive ? "ACTIVE" : "EXPIRED",
                           style: TextStyle(
@@ -403,12 +402,11 @@ class _UserStatusCardState extends State<UserStatusCard> {
               width: double.infinity,
               height: 36,
               child: Obx(() {
-                bool isActive = widget.user.isApproved.value;
+                bool isActive = widget.user.hasValidAccess;
                 return ElevatedButton(
                   onPressed: () =>
                       widget.controller.toggleApproval(widget.user),
                   style: ElevatedButton.styleFrom(
-                    // 🎨 Updated button colors: Active tab is Green, Expired/Pending tab is Red
                     backgroundColor: isActive
                         ? Colors.green.shade600
                         : Colors.red.shade400,
