@@ -9,18 +9,22 @@ class PaymentHistoryController extends GetxController {
   var selectedMonth = DateFormat('MMMM yyyy').format(DateTime.now()).obs;
   var selectedGender = 'All'.obs;
   var selectedDate = Rxn<DateTime>();
-  var searchQuery = ''.obs; // 👈 Search query observable
+  var searchQuery = ''.obs;
 
-  // 📊 Filtered payments based on search query
   List<dynamic> get filteredPayments {
     if (searchQuery.value.isEmpty) return payments;
     String q = searchQuery.value.toLowerCase().trim();
     return payments.where((p) {
-      final user = p['userId'] ?? {};
+      if (p is! Map) return false;
+      
+      // Safely access user map even if userId is just an unpopulated string ID
+      final user = (p['userId'] is Map) ? (p['userId'] as Map) : {};
+      
       String name = (user['name'] ?? '').toString().toLowerCase();
       String enrollment = (user['enrollmentNo'] ?? '').toString().toLowerCase();
       String phone = (user['phonenumber'] ?? '').toString().toLowerCase();
       String txnId = (p['transactionId'] ?? '').toString().toLowerCase();
+      
       return name.contains(q) ||
           enrollment.contains(q) ||
           phone.contains(q) ||
@@ -28,15 +32,17 @@ class PaymentHistoryController extends GetxController {
     }).toList();
   }
 
-  // 📊 Live Calculated Metrics based on filtered results
   int get totalStudentsPaid => filteredPayments.length;
   int get onlineCount =>
-      filteredPayments.where((p) => p['method'] != 'offline').length;
+      filteredPayments.where((p) => p is Map && p['method'] != 'offline').length;
   int get cashCount =>
-      filteredPayments.where((p) => p['method'] == 'offline').length;
+      filteredPayments.where((p) => p is Map && p['method'] == 'offline').length;
 
-  double get totalCollection =>
-      filteredPayments.fold(0, (sum, item) => sum + (item['amount'] ?? 0));
+  double get totalCollection => filteredPayments.fold(0.0, (sum, item) {
+        if (item is! Map) return sum;
+        final amt = double.tryParse(item['amount']?.toString() ?? '0') ?? 0.0;
+        return sum + amt;
+      });
 
   @override
   void onInit() {
@@ -64,7 +70,6 @@ class PaymentHistoryController extends GetxController {
     }
   }
 
-  // 🔍 Fixes the red squiggly error on your TextField
   void updateSearchQuery(String query) {
     searchQuery.value = query;
   }

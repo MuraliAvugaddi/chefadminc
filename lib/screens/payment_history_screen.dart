@@ -34,7 +34,7 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
       ),
       body: CustomScrollView(
         slivers: [
-          // 1. Branded Executive Summary Banner & Filter/Search Section
+          // 1. Executive Summary & Filter Bar
           SliverToBoxAdapter(
             child: Center(
               child: Container(
@@ -50,7 +50,7 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
             ),
           ),
 
-          // 2. Main Content List
+          // 2. Payments List
           Obx(() {
             if (controller.isLoading.value) {
               return const SliverFillRemaining(
@@ -94,11 +94,52 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final payment = displayList[index];
-                  final user = payment['userId'] ?? {};
+
+                  // Resolve user object: check nested userId first, then fallback to root payment fields
+                  final Map<dynamic, dynamic> user =
+                      (payment is Map && payment['userId'] is Map)
+                      ? (payment['userId'] as Map)
+                      : (payment is Map ? payment : {});
+
+                  final String studentName =
+                      user['name']?.toString() ??
+                      payment['studentName']?.toString() ??
+                      payment['name']?.toString() ??
+                      "Unknown Student";
+
+                  final String enrollmentNo =
+                      user['enrollmentNo']?.toString() ??
+                      payment['enrollmentNo']?.toString() ??
+                      user['studentId']?.toString() ??
+                      payment['studentId']?.toString() ??
+                      "N/A";
+
+                  final String year =
+                      user['year']?.toString() ??
+                      payment['year']?.toString() ??
+                      "N/A";
+
+                  final String room =
+                      user['room']?.toString() ??
+                      payment['room']?.toString() ??
+                      "N/A";
+
+                  final String phone =
+                      user['phonenumber']?.toString() ??
+                      payment['phonenumber']?.toString() ??
+                      payment['phone']?.toString() ??
+                      "N/A";
+
                   final bool isOffline = payment['method'] == 'offline';
-                  final DateTime paidAt = DateTime.parse(
-                    payment['paidAt'],
-                  ).toLocal();
+
+                  DateTime paidAt;
+                  try {
+                    paidAt = DateTime.parse(
+                      payment['paidAt'].toString(),
+                    ).toLocal();
+                  } catch (_) {
+                    paidAt = DateTime.now();
+                  }
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -143,7 +184,7 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        user['name'] ?? "Unknown Student",
+                                        studentName,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.poppins(
@@ -180,31 +221,29 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 4),
-                                // --- 📋 STUDENT DETAILS ---
+                                // --- STUDENT DETAILS ---
                                 Wrap(
                                   spacing: 12,
                                   runSpacing: 2,
                                   children: [
                                     _metaInfo(
                                       Icons.badge_outlined,
-                                      "ID: ${user['enrollmentNo'] ?? 'N/A'}",
+                                      "ID: $enrollmentNo",
                                     ),
                                     _metaInfo(
                                       Icons.school_outlined,
-                                      "Year: ${user['year'] ?? 'N/A'}",
+                                      "Year: $year",
                                     ),
                                     _metaInfo(
                                       Icons.meeting_room_outlined,
-                                      "Room: ${user['room'] ?? 'N/A'}",
+                                      "Room: $room",
                                     ),
-                                    _metaInfo(
-                                      Icons.phone_outlined,
-                                      "${user['phonenumber'] ?? 'N/A'}",
-                                    ),
+                                    if (phone != "N/A")
+                                      _metaInfo(Icons.phone_outlined, phone),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
-                                // --- 💳 TRANSACTION ID & TIMESTAMP ---
+                                // --- TRANSACTION ID & TIMESTAMP ---
                                 Wrap(
                                   spacing: 10,
                                   runSpacing: 2,
@@ -233,7 +272,7 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            "₹${payment['amount']}",
+                            "₹${payment['amount'] ?? 0}",
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -255,7 +294,6 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
     );
   }
 
-  // --- 🌟 BRANDED EXECUTIVE SUMMARY CARD ---
   Widget _buildExecutiveSummaryCard(PaymentHistoryController controller) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
@@ -310,7 +348,7 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
               () => Text(
                 "₹${controller.totalCollection.toStringAsFixed(0)}",
                 style: GoogleFonts.poppins(
-                  color: const Color(0xffFFC800), // Signature yellow highlight
+                  color: const Color(0xffFFC800),
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
@@ -319,7 +357,6 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const Divider(color: Colors.white24, height: 1),
             const SizedBox(height: 12),
-            // --- 📊 METRICS BREAKDOWN ---
             Obx(
               () => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -373,11 +410,7 @@ class GlobalPaymentHistoryScreen extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 12,
-          color: const Color(0xffFFC800),
-        ), // Branded icon tint
+        Icon(icon, size: 12, color: const Color(0xffFFC800)),
         const SizedBox(width: 3),
         Text(
           text,

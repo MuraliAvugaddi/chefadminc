@@ -45,6 +45,8 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   image_picker: ^1.0.7
   url_launcher: ^6.3.1  # Add this line
+  open_filex: ^4.4.0
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -98,3 +100,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/perfect_size.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/perfect_size.png"

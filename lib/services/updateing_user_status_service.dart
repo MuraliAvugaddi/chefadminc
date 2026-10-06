@@ -68,9 +68,21 @@ class AdminService {
       String formattedDate = DateFormat('yyyy-MM-dd').format(date);
       url += "&date=$formattedDate";
     }
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) return json.decode(response.body);
-    throw Exception('Payment fetch failed');
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}',
+      },
+    );
+    if (response.statusCode == 200) {
+      final decoded = json.decode(response.body);
+      if (decoded is List) return decoded;
+      if (decoded is Map && decoded['payments'] is List) return decoded['payments'];
+      if (decoded is Map && decoded['history'] is List) return decoded['history'];
+      return [];
+    }
+    throw Exception('Payment fetch failed with status: ${response.statusCode}');
   }
 
   static Future<List<dynamic>> getSkipReport(
