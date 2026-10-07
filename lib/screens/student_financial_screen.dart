@@ -1,9 +1,14 @@
 import 'dart:convert';
+import 'dart:io' as io;
 import 'package:chefadmin/controllers/updateing_user_status_controller.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:universal_html/html.dart' as html;
 
 import '../apis/apis_localhost.dart';
 import '../models/user_models.dart';
@@ -293,6 +298,102 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _exportExcel() async {
+    final group = _tabController.index == 0 ? 'Junior' : 'Senior';
+
+    final urlString =
+        '${ApiEndpoints.adminExportExcel}'
+        '?yearGroup=$group'
+        '&gender=${Uri.encodeComponent(selectedGender)}'
+        '&month=${Uri.encodeComponent(selectedMonth)}'
+        '&unpaidOnly=$showUnpaidOnly';
+
+    Get.snackbar(
+      'Exporting Excel',
+      showUnpaidOnly
+          ? 'Generating unpaid students report...'
+          : 'Generating mess report...',
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(12),
+      duration: const Duration(seconds: 2),
+    );
+
+    try {
+      final response = await http.get(
+        Uri.parse(urlString),
+        headers: {'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}'},
+      );
+
+      if (response.statusCode == 200) {
+        final cleanMonth = selectedMonth.replaceAll(' ', '_');
+        final prefix = showUnpaidOnly ? 'UNPAID_' : '';
+        final filename = 'Chef_${prefix}Mess_Report_${group}_$cleanMonth.xlsx';
+
+        if (kIsWeb) {
+          final blob = html.Blob(
+            [response.bodyBytes],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          );
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          final anchor = html.AnchorElement(href: url)
+            ..setAttribute('download', filename)
+            ..click();
+          html.Url.revokeObjectUrl(url);
+
+          Get.snackbar(
+            'Download Started',
+            'Excel report $filename is downloading.',
+            backgroundColor: ChefColors.success,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(12),
+            duration: const Duration(seconds: 3),
+          );
+        } else {
+          final directory = io.Platform.isAndroid
+              ? (await getExternalStorageDirectory()) ??
+                    (await getApplicationDocumentsDirectory())
+              : await getApplicationDocumentsDirectory();
+
+          final filePath = '${directory.path}/$filename';
+          final file = io.File(filePath);
+          await file.writeAsBytes(response.bodyBytes, flush: true);
+
+          Get.snackbar(
+            'Report Downloaded',
+            'Saved to device. Opening $filename...',
+            backgroundColor: ChefColors.success,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(12),
+            duration: const Duration(seconds: 3),
+          );
+
+          await OpenFilex.open(filePath);
+        }
+      } else {
+        Get.snackbar(
+          'Export Failed',
+          'Server returned code ${response.statusCode}',
+          backgroundColor: ChefColors.danger,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+        );
+      }
+    } catch (e) {
+      debugPrint('Excel export error: $e');
+      Get.snackbar(
+        'Export Failed',
+        'Could not save or download file: $e',
+        backgroundColor: ChefColors.danger,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+      );
+    }
   }
 
   @override
@@ -2044,76 +2145,6 @@ class _StudentFinancialScreenState extends State<StudentFinancialScreen>
         ),
       ],
     );
-  }
-
-  // Excel export request.
-  // This screen is now Android/iOS/Web compile-safe because it does not
-  // directly import dart:html.
-  Future<void> _exportExcel() async {
-    final group = _tabController.index == 0 ? 'Junior' : 'Senior';
-
-    final urlString =
-        '${ApiEndpoints.adminExportExcel}'
-        '?yearGroup=$group'
-        '&gender=${Uri.encodeComponent(selectedGender)}'
-        '&month=${Uri.encodeComponent(selectedMonth)}'
-        '&unpaidOnly=$showUnpaidOnly';
-
-    Get.snackbar(
-      'Exporting Excel',
-      showUnpaidOnly
-          ? 'Generating unpaid students report...'
-          : 'Generating mess report...',
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      duration: const Duration(seconds: 2),
-    );
-
-    try {
-      final response = await http.get(
-        Uri.parse(urlString),
-        headers: {'Authorization': 'Bearer ${ApiEndpoints.adminAuthToken}'},
-      );
-
-      if (response.statusCode == 200) {
-        final cleanMonth = selectedMonth.replaceAll(' ', '_');
-        final prefix = showUnpaidOnly ? 'UNPAID_' : '';
-        final filename = 'Chef_${prefix}Mess_Report_${group}_$cleanMonth.xlsx';
-
-        // The API request succeeds on every platform. The actual browser
-        // download requires a Web-specific handler, so Android/iOS simply
-        // confirm that the report was generated instead of using dart:html.
-        Get.snackbar(
-          'Report Generated',
-          'Excel report $filename is ready.',
-          backgroundColor: ChefColors.success,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
-          duration: const Duration(seconds: 3),
-        );
-      } else {
-        Get.snackbar(
-          'Export Failed',
-          'Server returned code ${response.statusCode}',
-          backgroundColor: ChefColors.danger,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
-        );
-      }
-    } catch (e) {
-      debugPrint('Excel export error: $e');
-
-      Get.snackbar(
-        'Export Failed',
-        'Could not connect to the server.',
-        backgroundColor: ChefColors.danger,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-      );
-    }
   }
 
   Widget _buildExcelExportButton() {
