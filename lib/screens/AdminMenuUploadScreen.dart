@@ -1,4 +1,5 @@
 import 'package:chefadmin/controllers/admin_menu_controller.dart';
+import 'package:chefadmin/screens/payment_notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,7 +17,9 @@ class AdminMenuUploadScreen extends StatelessWidget {
     double screenWidth = MediaQuery.of(context).size.width;
     bool isWideScreen = screenWidth > 850;
 
-    return Scaffold(
+    // ⚠️ First tap anywhere shows the payment notice; screen unlocks after "I understand".
+    return PaymentNoticeGate(
+      child: Scaffold(
       backgroundColor: const Color(0xffF4F7FE),
       appBar: AppBar(
         title: Text(
@@ -44,6 +47,9 @@ class AdminMenuUploadScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- ⚠️ PAYMENT / SERVER NOTICE ---
+                  const PaymentNoticeBanner(),
+
                   // --- 📅 MONTH & YEAR INPUT CONTAINER ---
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -382,6 +388,7 @@ class AdminMenuUploadScreen extends StatelessWidget {
           ),
         );
       }),
+      ),
     );
   }
 

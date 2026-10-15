@@ -1,6 +1,7 @@
 import 'package:chefadmin/screens/AdminMenuUploadScreen.dart';
 import 'package:chefadmin/screens/DayScholarOrdersScreen.dart';
 import 'package:chefadmin/screens/Skip%20_StatsScreen.dart';
+import 'package:chefadmin/screens/payment_notice_banner.dart';
 import 'package:chefadmin/screens/student_financial_screen.dart';
 import 'package:chefadmin/screens/studetns_feesbackscreen.dart';
 import 'package:chefadmin/screens/payment_history_screen.dart';
@@ -30,59 +31,65 @@ class Homescreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: background,
-      appBar: _buildAppBar(context),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          final isMobile = width < 600;
-          final isTablet = width >= 600 && width < 1000;
-          final isDesktop = width >= 1000;
+    // ⚠️ First tap anywhere shows the payment notice; screen unlocks after "I understand".
+    return PaymentNoticeGate(
+      child: Scaffold(
+        backgroundColor: background,
+        appBar: _buildAppBar(context),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final isMobile = width < 600;
+            final isTablet = width >= 600 && width < 1000;
+            final isDesktop = width >= 1000;
 
-          final columns = isDesktop ? 4 : (isTablet ? 2 : 1);
+            final columns = isDesktop ? 4 : (isTablet ? 2 : 1);
 
-          final horizontalPadding = isMobile ? 14.0 : (isTablet ? 22.0 : 26.0);
+            final horizontalPadding =
+                isMobile ? 14.0 : (isTablet ? 22.0 : 26.0);
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1500),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  isMobile ? 16 : 24,
-                  horizontalPadding,
-                  isMobile ? 14 : 24,
-                ),
-                child: Column(
-                  children: [
-                    _buildDashboardHeader(
-                      isMobile: isMobile,
-                      isTablet: isTablet,
-                    ),
-                    SizedBox(height: isMobile ? 14 : 20),
-                    Expanded(
-                      child: GridView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.only(bottom: isMobile ? 10 : 24),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: columns,
-                          crossAxisSpacing: isMobile ? 10 : 16,
-                          mainAxisSpacing: isMobile ? 10 : 16,
-                          childAspectRatio: _getCardAspectRatio(width),
-                        ),
-                        itemCount: 8,
-                        itemBuilder: (context, index) {
-                          return _buildMenuItem(index, isMobile: isMobile);
-                        },
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1500),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    isMobile ? 16 : 24,
+                    horizontalPadding,
+                    isMobile ? 14 : 24,
+                  ),
+                  child: Column(
+                    children: [
+                      const PaymentNoticeBanner(),
+                      _buildDashboardHeader(
+                        isMobile: isMobile,
+                        isTablet: isTablet,
                       ),
-                    ),
-                  ],
+                      SizedBox(height: isMobile ? 14 : 20),
+                      Expanded(
+                        child: GridView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.only(bottom: isMobile ? 10 : 24),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: isMobile ? 10 : 16,
+                            mainAxisSpacing: isMobile ? 10 : 16,
+                            childAspectRatio: _getCardAspectRatio(width),
+                          ),
+                          itemCount: 8,
+                          itemBuilder: (context, index) {
+                            return _buildMenuItem(index, isMobile: isMobile);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

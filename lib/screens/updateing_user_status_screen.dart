@@ -1,5 +1,6 @@
 import 'package:chefadmin/controllers/updateing_user_status_controller.dart';
 import 'package:chefadmin/models/user_models.dart';
+import 'package:chefadmin/screens/payment_notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,162 +11,171 @@ class UpdateingUserStatusScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: const Color(0xffF4F7FE),
-        appBar: AppBar(
-          toolbarHeight: 65,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Student Directory",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontSize: 18,
-                ),
-              ),
-              Text(
-                "Manage mess access & renewals",
-                style: GoogleFonts.poppins(
-                  color: Colors.grey.shade600,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: false,
-          actions: [
-            _buildHeaderAction(
-              icon: Icons.power_settings_new,
-              color: Colors.red,
-              onTap: () => controller.showDeactivateAllDialog(context),
-              tooltip: "Reset Month",
-            ),
-            const SizedBox(width: 4),
-            _buildHeaderAction(
-              icon: Icons.refresh,
-              color: const Color(0xffFFC800),
-              onTap: () => controller.fetchUsers(),
-              tooltip: "Sync Data",
-            ),
-            const SizedBox(width: 12),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(45),
-            child: Container(
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.only(left: 16),
-              child: TabBar(
-                isScrollable: true,
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: const Color(0xffFFC800),
-                indicatorWeight: 3,
-                indicatorSize: TabBarIndicatorSize.label,
-                tabs: [
-                  Tab(child: _tabLabel("Active Students", Icons.verified_user)),
-                  Tab(child: _tabLabel("Expired/Pending", Icons.error_outline)),
-                ],
-              ),
-            ),
-          ),
-        ),
-        body: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Column(
+    // ⚠️ First tap anywhere shows the payment notice; screen unlocks after "I understand".
+    return PaymentNoticeGate(
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          backgroundColor: const Color(0xffF4F7FE),
+          appBar: AppBar(
+            toolbarHeight: 65,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- 📊 STATS ROW ---
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Obx(() {
-                    int total = controller.totalUsersCount;
-                    int active = controller.totalActiveCount;
-                    int expired = controller.totalInactiveCount;
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: _buildHeaderStatChip(
-                            "Total",
-                            total.toString(),
-                            Colors.blue,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildHeaderStatChip(
-                            "Active",
-                            active.toString(),
-                            Colors.green,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildHeaderStatChip(
-                            "No Access",
-                            expired.toString(),
-                            Colors.red,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
+                Text(
+                  "Student Directory",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: 18,
+                  ),
                 ),
+                Text(
+                  "Manage mess access & renewals",
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade600,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: false,
+            actions: [
+              _buildHeaderAction(
+                icon: Icons.power_settings_new,
+                color: Colors.red,
+                onTap: () => controller.showDeactivateAllDialog(context),
+                tooltip: "Reset Month",
+              ),
+              const SizedBox(width: 4),
+              _buildHeaderAction(
+                icon: Icons.refresh,
+                color: const Color(0xffFFC800),
+                onTap: () => controller.fetchUsers(),
+                tooltip: "Sync Data",
+              ),
+              const SizedBox(width: 12),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(45),
+              child: Container(
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.only(left: 16),
+                child: TabBar(
+                  isScrollable: true,
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: const Color(0xffFFC800),
+                  indicatorWeight: 3,
+                  indicatorSize: TabBarIndicatorSize.label,
+                  tabs: [
+                    Tab(child: _tabLabel("Active Students", Icons.verified_user)),
+                    Tab(child: _tabLabel("Expired/Pending", Icons.error_outline)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          body: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Column(
+                children: [
+                  // --- ⚠️ PAYMENT / SERVER NOTICE ---
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: PaymentNoticeBanner(),
+                  ),
 
-                // --- 🔍 SEARCH BAR ---
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-                  child: Container(
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      onChanged: controller.updateSearchQuery,
-                      decoration: InputDecoration(
-                        hintText: "Search by phone, name, or enrollment...",
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.grey.shade400,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Color(0xffFFC800),
-                          size: 18,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 11,
+                  // --- 📊 STATS ROW ---
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: Obx(() {
+                      int total = controller.totalUsersCount;
+                      int active = controller.totalActiveCount;
+                      int expired = controller.totalInactiveCount;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: _buildHeaderStatChip(
+                              "Total",
+                              total.toString(),
+                              Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildHeaderStatChip(
+                              "Active",
+                              active.toString(),
+                              Colors.green,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildHeaderStatChip(
+                              "No Access",
+                              expired.toString(),
+                              Colors.red,
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+
+                  // --- 🔍 SEARCH BAR ---
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        onChanged: controller.updateSearchQuery,
+                        decoration: InputDecoration(
+                          hintText: "Search by phone, name, or enrollment...",
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey.shade400,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Color(0xffFFC800),
+                            size: 18,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 11,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
 
-                // --- 📋 GRID CONTENT ---
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _buildResponsiveGrid(context, controller, true),
-                      _buildResponsiveGrid(context, controller, false),
-                    ],
+                  // --- 📋 GRID CONTENT ---
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _buildResponsiveGrid(context, controller, true),
+                        _buildResponsiveGrid(context, controller, false),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

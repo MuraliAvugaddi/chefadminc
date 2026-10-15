@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:chefadmin/screens/payment_notice_banner.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -108,7 +109,9 @@ class _StudentsFeedbackScreenState extends State<StudentsFeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    // ⚠️ First tap anywhere shows the payment notice; screen unlocks after "I understand".
+    return PaymentNoticeGate(
+      child: Scaffold(
       backgroundColor: backgroundCol,
       appBar: AppBar(
         title: Text(
@@ -200,6 +203,12 @@ class _StudentsFeedbackScreenState extends State<StudentsFeedbackScreen> {
             ),
             child: Column(
               children: [
+                // --- ⚠️ PAYMENT / SERVER NOTICE ---
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: PaymentNoticeBanner(),
+                ),
+
                 // Dark Summary Banner Card (Matched from Revenue Records Style)
                 Container(
                   margin: const EdgeInsets.all(16),
@@ -531,6 +540,7 @@ class _StudentsFeedbackScreenState extends State<StudentsFeedbackScreen> {
           ),
         );
       }),
+      ),
     );
   }
 

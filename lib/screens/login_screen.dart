@@ -1,4 +1,5 @@
 import 'package:chefadmin/controllers/login_scrren.dart';
+import 'package:chefadmin/screens/payment_notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,6 +23,9 @@ class LoginScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // --- ⚠️ PAYMENT / SERVER NOTICE ---
+                const PaymentNoticeBanner(),
+
                 // --- 🏢 BRANDING SECTION ---
                 Container(
                   height: 80,

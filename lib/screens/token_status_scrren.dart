@@ -1,4 +1,5 @@
 import 'package:chefadmin/controllers/token_controller.dart';
+import 'package:chefadmin/screens/payment_notice_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,84 +15,95 @@ class TokenStatusScreen extends StatelessWidget {
     double screenWidth = MediaQuery.of(context).size.width;
     bool isWideScreen = screenWidth > 800;
 
-    return Scaffold(
-      backgroundColor: const Color(0xffF8F9FA),
-      appBar: AppBar(
-        title: Text(
-          "Token Analytics",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+    // ⚠️ First tap anywhere shows the payment notice; screen unlocks after "I understand".
+    return PaymentNoticeGate(
+      child: Scaffold(
+        backgroundColor: const Color(0xffF8F9FA),
+        appBar: AppBar(
+          title: Text(
+            "Token Analytics",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
+          backgroundColor: const Color(0xffFFC800),
+          centerTitle: true,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Colors.black),
+              onPressed: () => controller.fetchDashboardData(),
+            ),
+          ],
         ),
-        backgroundColor: const Color(0xffFFC800),
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.black),
-            onPressed: () => controller.fetchDashboardData(),
-          ),
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xffFFC800)),
-          );
-        }
-        if (controller.errorMessage.value.isNotEmpty) {
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xffFFC800)),
+            );
+          }
+          if (controller.errorMessage.value.isNotEmpty) {
+            return Center(
+              child: Text(
+                controller.errorMessage.value,
+                style: GoogleFonts.poppins(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          }
+
           return Center(
-            child: Text(
-              controller.errorMessage.value,
-              style: GoogleFonts.poppins(
-                color: Colors.red,
-                fontWeight: FontWeight.w500,
+            child: Container(
+              constraints: const BoxConstraints(
+                maxWidth: 1200,
+              ), // Centers dashboard on wide web screens
+              child: CustomScrollView(
+                slivers: [
+                  // --- ⚠️ PAYMENT / SERVER NOTICE ---
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: PaymentNoticeBanner(),
+                    ),
+                  ),
+
+                  // 1. Today's Section Header
+                  _buildSliverHeader(
+                    "Today's Tokens",
+                    DateFormat('MMMM d, yyyy').format(DateTime.now()),
+                  ),
+
+                  // 2. Today's Responsive Grid
+                  _buildResponsiveGrid(controller.todayStats, isWideScreen),
+
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Divider(indent: 20, endIndent: 20),
+                    ),
+                  ),
+
+                  // 3. Yesterday's Section Header
+                  _buildSliverHeader(
+                    "Yesterday's Tokens",
+                    DateFormat(
+                      'MMMM d, yyyy',
+                    ).format(DateTime.now().subtract(const Duration(days: 1))),
+                  ),
+
+                  // 4. Yesterday's Responsive Grid
+                  _buildResponsiveGrid(controller.yesterdayStats, isWideScreen),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                ],
               ),
             ),
           );
-        }
-
-        return Center(
-          child: Container(
-            constraints: const BoxConstraints(
-              maxWidth: 1200,
-            ), // Centers dashboard on wide web screens
-            child: CustomScrollView(
-              slivers: [
-                // 1. Today's Section Header
-                _buildSliverHeader(
-                  "Today's Tokens",
-                  DateFormat('MMMM d, yyyy').format(DateTime.now()),
-                ),
-
-                // 2. Today's Responsive Grid
-                _buildResponsiveGrid(controller.todayStats, isWideScreen),
-
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Divider(indent: 20, endIndent: 20),
-                  ),
-                ),
-
-                // 3. Yesterday's Section Header
-                _buildSliverHeader(
-                  "Yesterday's Tokens",
-                  DateFormat(
-                    'MMMM d, yyyy',
-                  ).format(DateTime.now().subtract(const Duration(days: 1))),
-                ),
-
-                // 4. Yesterday's Responsive Grid
-                _buildResponsiveGrid(controller.yesterdayStats, isWideScreen),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 50)),
-              ],
-            ),
-          ),
-        );
-      }),
+        }),
+      ),
     );
   }
 
