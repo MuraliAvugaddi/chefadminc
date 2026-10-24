@@ -10,8 +10,15 @@ class AdminMenuController extends GetxController {
 
   final List<String> days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  final monthController = TextEditingController(text: 'August 2026');
-  final yearController = TextEditingController(text: '2026');
+  // ✅ Defaults to the current month (no more hard-coded "August 2026")
+  static const _monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  final monthController = TextEditingController(
+    text: '${_monthNames[DateTime.now().month - 1]} ${DateTime.now().year}',
+  );
+  final yearController = TextEditingController(text: '${DateTime.now().year}');
 
   // Controllers map for each day and meal type
   final Map<String, Map<String, TextEditingController>> formControllers = {};

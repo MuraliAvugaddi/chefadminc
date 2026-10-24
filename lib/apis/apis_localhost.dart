@@ -1,10 +1,12 @@
 class ApiEndpoints {
-
-  //--- Production Render URLs (Commented Out) ---
+  // //--- Production Render URLs (Commented Out) ---
   static const String baseUrl =
       'https://chefhospitality-backend-main.onrender.com/api';
   static const String socketUrl =
       'https://chefhospitality-backend-main.onrender.com/socket';
+  // Local development URLs
+  // static const String baseUrl = 'http://192.168.1.14:5002/api';
+  // static const String socketUrl = 'http://192.168.1.14:5002'; // Sockets typically connect to the host root
 
   static const String adminBase = '$baseUrl/admin';
 
@@ -31,6 +33,26 @@ class ApiEndpoints {
 
   // ✅ NEW: Payment / server notice shown on admin home screen
   static const String systemNotice = '$baseUrl/system/notice';
+
+  // ✅ NEW: UPI screenshot payments
+  static const String paymentSubmissions = '$adminBase/payment-submissions';
+  static const String paymentSubmissionCounts =
+      '$adminBase/payment-submissions/counts';
+  static String approveSubmission(String id) =>
+      '$adminBase/payment-submissions/$id/approve';
+  static String rejectSubmission(String id) =>
+      '$adminBase/payment-submissions/$id/reject';
+  static String studentReceipts(String userId) =>
+      '$adminBase/students/$userId/receipts';
+
+  static const String submissions = '$adminBase/payment-submissions';
+  static const String submissionCounts =
+      '$adminBase/payment-submissions/counts';
+  static String approve(String id) =>
+      '$adminBase/payment-submissions/$id/approve';
+  static String reject(String id) =>
+      '$adminBase/payment-submissions/$id/reject';
+  //static String studentReceipts(String userId) => '$adminBase/students/$userId/receipts';
 
   static const String adminAuthToken = 'YOUR_ADMIN_JWT_TOKEN';
 }

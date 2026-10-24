@@ -27,7 +27,7 @@ class LoginController extends GetxController {
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white);
-      Get.offAll(() => const Homescreen());
+      Get.offAll(() =>  Homescreen());
     } else {
       Get.snackbar('Access Denied', 'Invalid credentials.',
           snackPosition: SnackPosition.BOTTOM,

@@ -1,19 +1,73 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:chefadmin/screens/AdminMenuUploadScreen.dart';
 import 'package:chefadmin/screens/DayScholarOrdersScreen.dart';
 import 'package:chefadmin/screens/Skip%20_StatsScreen.dart';
-import 'package:chefadmin/screens/payment_notice_banner.dart';
 import 'package:chefadmin/screens/student_financial_screen.dart';
 import 'package:chefadmin/screens/studetns_feesbackscreen.dart';
 import 'package:chefadmin/screens/payment_history_screen.dart';
 import 'package:chefadmin/screens/token_history_screen.dart';
 import 'package:chefadmin/screens/token_status_scrren.dart';
 import 'package:chefadmin/screens/updateing_user_status_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:chefadmin/screens/payment_requests_screen.dart';
 
+// --- System Notice Controller ---
+class SystemNoticeController extends GetxController {
+  var isActive = false.obs;
+  var title = ''.obs;
+  var message = ''.obs;
+  var level = 'warning'.obs;
+  var isLoading = false.obs;
+
+  static const String statusUrl =
+      "https://chefhospitality-backend-main.onrender.com/api/system/status";
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchNotice();
+  }
+
+  Future<void> fetchNotice() async {
+    try {
+      isLoading.value = true;
+      final response = await http
+          .get(Uri.parse(statusUrl))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final notice = data['data']?['maintenanceNotice'];
+        if (notice != null && notice['isActive'] == true) {
+          isActive.value = true;
+          title.value = notice['title'] ?? 'System Infrastructure Notice';
+          message.value = notice['message'] ?? '';
+          level.value = notice['level'] ?? 'warning';
+        } else {
+          isActive.value = false;
+        }
+      }
+    } catch (e) {
+      // Keeps the dashboard running cleanly if the network fails
+      isActive.value = false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}
+
+// --- Homescreen View ---
 class Homescreen extends StatelessWidget {
-  const Homescreen({super.key});
+  Homescreen({super.key});
+
+  final SystemNoticeController noticeCtrl = Get.put(
+    SystemNoticeController(),
+    permanent: true,
+  );
 
   static const Color chefYellow = Color(0xFFFFC800);
   static const Color background = Color(0xFFF7F8FA);
@@ -31,67 +85,142 @@ class Homescreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ⚠️ First tap anywhere shows the payment notice; screen unlocks after "I understand".
-    return PaymentNoticeGate(
-      child: Scaffold(
-        backgroundColor: background,
-        appBar: _buildAppBar(context),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final isMobile = width < 600;
-            final isTablet = width >= 600 && width < 1000;
-            final isDesktop = width >= 1000;
+    return Scaffold(
+      backgroundColor: background,
+      appBar: _buildAppBar(context),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final isMobile = width < 600;
+          final isTablet = width >= 600 && width < 1000;
+          final isDesktop = width >= 1000;
 
-            final columns = isDesktop ? 4 : (isTablet ? 2 : 1);
+          final columns = isDesktop ? 4 : (isTablet ? 2 : 1);
+          final horizontalPadding = isMobile ? 14.0 : (isTablet ? 22.0 : 26.0);
 
-            final horizontalPadding =
-                isMobile ? 14.0 : (isTablet ? 22.0 : 26.0);
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1500),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  isMobile ? 16 : 24,
+                  horizontalPadding,
+                  isMobile ? 14 : 24,
+                ),
+                child: Column(
+                  children: [
+                    // Dynamic Server/Database Notice Banner
+                    _buildSystemNoticeBanner(isMobile),
 
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1500),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    isMobile ? 16 : 24,
-                    horizontalPadding,
-                    isMobile ? 14 : 24,
-                  ),
-                  child: Column(
-                    children: [
-                      const PaymentNoticeBanner(),
-                      _buildDashboardHeader(
-                        isMobile: isMobile,
-                        isTablet: isTablet,
-                      ),
-                      SizedBox(height: isMobile ? 14 : 20),
-                      Expanded(
-                        child: GridView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          padding: EdgeInsets.only(bottom: isMobile ? 10 : 24),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: columns,
-                            crossAxisSpacing: isMobile ? 10 : 16,
-                            mainAxisSpacing: isMobile ? 10 : 16,
-                            childAspectRatio: _getCardAspectRatio(width),
-                          ),
-                          itemCount: 8,
-                          itemBuilder: (context, index) {
-                            return _buildMenuItem(index, isMobile: isMobile);
-                          },
+                    _buildDashboardHeader(
+                      isMobile: isMobile,
+                      isTablet: isTablet,
+                    ),
+                    SizedBox(height: isMobile ? 14 : 20),
+                    Expanded(
+                      child: GridView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.only(bottom: isMobile ? 10 : 24),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: isMobile ? 10 : 16,
+                          mainAxisSpacing: isMobile ? 10 : 16,
+                          childAspectRatio: _getCardAspectRatio(width),
                         ),
+                        itemCount: 9,
+                        itemBuilder: (context, index) {
+                          return _buildMenuItem(index, isMobile: isMobile);
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
+  }
+
+  // --- Dynamic Warning Banner Widget ---
+  Widget _buildSystemNoticeBanner(bool isMobile) {
+    return Obx(() {
+      if (!noticeCtrl.isActive.value) return const SizedBox.shrink();
+
+      final isCritical = noticeCtrl.level.value == 'critical';
+      final bgColor = isCritical
+          ? const Color(0xFFB71C1C)
+          : const Color(0xFFE65100);
+      final iconBg = isCritical
+          ? const Color(0xFF880E4F)
+          : const Color(0xFFBF360C);
+
+      return Container(
+        width: double.infinity,
+        margin: EdgeInsets.only(bottom: isMobile ? 14 : 18),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 14 : 18,
+          vertical: isMobile ? 12 : 14,
+        ),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(isMobile ? 12 : 14),
+          boxShadow: [
+            BoxShadow(
+              color: bgColor.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: iconBg.withValues(alpha: 0.6),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    noticeCtrl.title.value,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: isMobile ? 12.5 : 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    noticeCtrl.message.value,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontSize: isMobile ? 10 : 11.5,
+                      fontWeight: FontWeight.w400,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
@@ -228,36 +357,46 @@ class Homescreen extends StatelessWidget {
           ),
         ),
         if (!isMobile)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: borderColor),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF16A34A),
-                    shape: BoxShape.circle,
-                  ),
+          Obx(() {
+            final isCritical =
+                noticeCtrl.isActive.value &&
+                noticeCtrl.level.value == 'critical';
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isCritical ? const Color(0xFFE53935) : borderColor,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  'System Active',
-                  style: GoogleFonts.poppins(
-                    color: textPrimary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: isCritical
+                          ? const Color(0xFFE53935)
+                          : const Color(0xFF16A34A),
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(width: 6),
+                  Text(
+                    isCritical ? 'Attention Required' : 'System Active',
+                    style: GoogleFonts.poppins(
+                      color: isCritical ? const Color(0xFFE53935) : textPrimary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
       ],
     );
   }
@@ -265,8 +404,6 @@ class Homescreen extends StatelessWidget {
   double _getCardAspectRatio(double width) {
     if (width < 600) return 3.0;
     if (width < 1000) return 2.05;
-
-    // Bigger desktop cards.
     return 1.65;
   }
 
@@ -296,6 +433,18 @@ class Homescreen extends StatelessWidget {
 
       case 2:
         return _buildMenuCard(
+          title: 'Payment Requests',
+          subtitle: 'Approve UPI screenshots',
+          icon: Icons.fact_check_rounded,
+          color: const Color(0xFF16A34A),
+          isPrimary: true,
+          badge: const PendingPaymentsBadge(),
+          isMobile: isMobile,
+          onTap: () => Get.to(() => const PaymentRequestsScreen()),
+        );
+
+      case 3:
+        return _buildMenuCard(
           title: 'Token Logs',
           subtitle: 'Full token generation history',
           icon: Icons.history_edu_rounded,
@@ -304,7 +453,7 @@ class Homescreen extends StatelessWidget {
           onTap: () => Get.to(() => const TokenHistoryScreen()),
         );
 
-      case 3:
+      case 4:
         return _buildMenuCard(
           title: 'Revenue Records',
           subtitle: 'Online & offline payments',
@@ -314,7 +463,7 @@ class Homescreen extends StatelessWidget {
           onTap: () => Get.to(() => const GlobalPaymentHistoryScreen()),
         );
 
-      case 4:
+      case 5:
         return _buildMenuCard(
           title: 'Menu Upload',
           subtitle: 'Manage daily food menu',
@@ -324,7 +473,7 @@ class Homescreen extends StatelessWidget {
           onTap: () => Get.to(() => const AdminMenuUploadScreen()),
         );
 
-      case 5:
+      case 6:
         return _buildMenuCard(
           title: 'Day Scholar Orders',
           subtitle: 'Manage day scholar orders',
@@ -334,7 +483,7 @@ class Homescreen extends StatelessWidget {
           onTap: () => Get.to(() => DayScholarOrdersScreen()),
         );
 
-      case 6:
+      case 7:
         return _buildMenuCard(
           title: 'Student Feedback',
           subtitle: 'Ratings & student reviews',
@@ -344,7 +493,7 @@ class Homescreen extends StatelessWidget {
           onTap: () => Get.to(() => const StudentsFeedbackScreen()),
         );
 
-      case 7:
+      case 8:
         return _buildMenuCard(
           title: 'User Management',
           subtitle: 'Approve & renew access',
@@ -369,6 +518,7 @@ class Homescreen extends StatelessWidget {
     required bool isMobile,
     bool isPrimary = false,
     bool isLast = false,
+    Widget? badge,
   }) {
     return Material(
       color: Colors.transparent,
@@ -412,9 +562,7 @@ class Homescreen extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: isMobile ? 21 : 29),
               ),
-
               SizedBox(width: isMobile ? 10 : 17),
-
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -455,11 +603,10 @@ class Homescreen extends StatelessWidget {
                             ),
                           ),
                         ],
+                        if (badge != null) ...[const SizedBox(width: 6), badge],
                       ],
                     ),
-
                     const SizedBox(height: 5),
-
                     Text(
                       subtitle,
                       maxLines: 2,
@@ -474,9 +621,7 @@ class Homescreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Container(
                 width: isMobile ? 30 : 40,
                 height: isMobile ? 30 : 40,
